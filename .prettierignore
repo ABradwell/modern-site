@@ -3,3 +3,6 @@ out
 node_modules
 pnpm-lock.yaml
 src/content/terrain.generated.ts
+
+# nested git worktrees are full checkouts of this repo
+.claude/worktrees
