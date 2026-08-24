@@ -46,3 +46,6 @@ next-env.d.ts
 
 # terrain contact sheets from `pnpm terrain -- --preview`
 .terrain-preview
+
+.claude/worktrees
+.claude/worktrees/

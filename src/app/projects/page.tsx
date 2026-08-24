@@ -39,8 +39,9 @@ export default function ProjectsPage() {
           Projects
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          Five things worth showing. Most are older than the work I do now, and they are
-          dated accordingly.
+          Nothing excites people like 3 year old projects with accompanying videos of me
+          as a younger lad, eh? Enjoy some archives from pre-industry (and pre 24/7
+          startup coding)
         </p>
 
         <ScrollCue href="#projects" />
