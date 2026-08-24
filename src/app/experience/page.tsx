@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Section, StationContent } from '@/components/layout/StationContent'
+import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
@@ -60,6 +61,8 @@ export default function ExperiencePage() {
           Four roles that mattered, from a semiconductor test lab to leading a team on
           biometric authentication.
         </p>
+
+        <ScrollCue href="#roles" />
       </StationHero>
 
       <StationContent>

@@ -5,8 +5,9 @@ import { STATIONS } from '@/content/stations'
 
 /**
  * Grouped with a hairline rather than boxed, since nothing here needs elevation.
- * The contact link uses SITE.contactLabel, the same string as the hero, because
- * two differently worded routes to one inbox is one route too many.
+ * The contact link uses SITE.contactLabel, the same string and the same
+ * destination as the hero button, because two differently worded routes to one
+ * inbox is one route too many.
  */
 export function SiteFooter() {
   return (
@@ -40,12 +41,15 @@ export function SiteFooter() {
             <h2 className="text-xs font-medium text-muted-foreground">Elsewhere</h2>
             <ul className="mt-3 space-y-2">
               <li>
-                <a
-                  href={`mailto:${SITE.email}`}
+                {/* The section, not a bare mailto. Same destination as the hero
+                    button, so there is one route to the contact block and the
+                    reader chooses the app rather than having one chosen. */}
+                <Link
+                  href="/#contact"
                   className="text-sm text-foreground/85 hover:text-foreground"
                 >
                   {SITE.contactLabel}
-                </a>
+                </Link>
               </li>
               <li>
                 <a

@@ -4,6 +4,8 @@ import { motion, useTransform, type MotionValue } from 'motion/react'
 
 import { SPEED } from '@/lib/motion'
 
+import { ORB_CLASS, ORB_DISC, ORB_HALO } from './atmosphere'
+
 /**
  * The sun, or the moon in dark mode.
  *
@@ -47,22 +49,14 @@ export function Orb({
   const y = useTransform(scrollY, (v) => (still ? 0 : -v * SPEED.orb))
 
   return (
-    <motion.div
-      style={{ y }}
-      className="absolute top-[46dvh] right-[10vw] size-[clamp(72px,20vw,104px)] md:top-[17dvh] md:right-[9vw] md:size-[clamp(132px,14vw,208px)]"
-    >
+    <motion.div style={{ y }} className={ORB_CLASS}>
       <div
         className="absolute inset-[-55%] rounded-full opacity-70"
-        style={{
-          background: 'radial-gradient(circle, var(--orb-halo) 0%, transparent 62%)',
-        }}
+        style={{ background: ORB_HALO }}
       />
       <div
         className="absolute inset-0 rounded-full transition-[background] duration-500 ease-[var(--ease-out-expo)] motion-reduce:transition-none"
-        style={{
-          background:
-            'radial-gradient(circle at 38% 34%, var(--orb-core) 0%, var(--orb) 62%, color-mix(in oklab, var(--orb) 88%, var(--terrain-1)) 100%)',
-        }}
+        style={{ background: ORB_DISC }}
       />
     </motion.div>
   )

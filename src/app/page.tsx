@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
 import { AllProjectsLink, FeaturedWork } from '@/components/sections/FeaturedWork'
+import { ContactRoutes } from '@/components/sections/ContactRoutes'
 import { Section, StationContent } from '@/components/layout/StationContent'
+import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { ABOUT, HERO_SUBTEXT, SITE } from '@/content/site'
@@ -39,23 +41,24 @@ export default function HomePage() {
           >
             View projects
           </Link>
+          {/*
+            An in-page jump, not a mailto. Firing the reader's mail client at
+            them from a hero button is abrupt, does nothing at all if they have
+            no client configured, and offers no alternative. This scrolls to the
+            contact block instead, where every route is on show.
+          */}
           <a
-            href={`mailto:${SITE.email}`}
+            href="#contact"
             className="rounded-ctl border border-border-strong px-6 py-3 text-sm font-medium text-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none"
           >
             {SITE.contactLabel}
           </a>
         </div>
+
+        <ScrollCue href="#work" />
       </StationHero>
 
       <StationContent>
-        <Section id="work" title="Selected work">
-          <FeaturedWork />
-          <div className="mt-10">
-            <AllProjectsLink />
-          </div>
-        </Section>
-
         {/* Single column, measured to 65ch. A different family from the split
             above, which is what keeps the page from reading as one idea twice. */}
         <Section id="about" title="About">
@@ -92,21 +95,23 @@ export default function HomePage() {
           </div>
         </Section>
 
-        {/* Minimal close, high negative space. One CTA, and the same label the
-            hero and footer use. */}
+        {/* The close, and the destination of both the hero button and the
+            footer link. Still high negative space: one line of copy and a list
+            of routes, nothing else. */}
         <Section id="contact" title={SITE.contactLabel}>
-          <div className="max-w-[46ch]">
-            <p className="text-lg leading-relaxed text-foreground/90 md:text-xl">
-              If you are hiring, building something in authentication, or just want to
-              argue about object orientation, write to me.
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+            <p className="max-w-[46ch] text-lg leading-relaxed text-foreground/90 md:text-xl">
+              Whether you&apos;re looking to work together, start something new, or extend
+              your network, please do not hesitate to reach out!
             </p>
-            <a
-              href={`mailto:${SITE.email}`}
-              className="mt-8 inline-flex items-center gap-2 text-base font-medium text-primary"
-            >
-              {SITE.email}
-              <ArrowUpRight className="size-4" weight="regular" aria-hidden />
-            </a>
+            <ContactRoutes />
+          </div>
+        </Section>
+
+        <Section id="work" title="Selected work">
+          <FeaturedWork />
+          <div className="mt-10">
+            <AllProjectsLink />
           </div>
         </Section>
       </StationContent>

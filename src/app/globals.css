@@ -322,6 +322,13 @@
     background-color: var(--background);
     color: var(--foreground);
     -webkit-text-size-adjust: 100%;
+    /* Next 16 removed the automatic smooth scroll, so in-page anchors need this
+       declared. It pairs with data-scroll-behavior="smooth" on <html>: that
+       attribute is what tells the App Router to force `auto` for its own scroll
+       resets, so route changes stay instant while anchor clicks glide. Without
+       the attribute this line makes every navigation crawl; without this line
+       the attribute does nothing. The reduced-motion block below reverts it. */
+    scroll-behavior: smooth;
   }
 
   body {

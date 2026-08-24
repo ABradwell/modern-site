@@ -11,6 +11,15 @@ export const SITE: SiteConfig = {
   description:
     'Engineering Team Lead at zally in Manchester. Biometric authentication, AWS architecture, and the systems that hold them up.',
   email: 'aidenbradwell@gmail.com',
+  /**
+   * NEEDS THE OWNER'S NUMBER. Left null on purpose rather than filled with
+   * something plausible, because a made-up number on a public page rings a real
+   * stranger. The contact section renders a phone row only when this is set, so
+   * nothing is broken meanwhile. Fill both halves:
+   *
+   *   phone: { e164: '+447700900123', display: '+44 7700 900123' },
+   */
+  phone: null,
   github: 'https://github.com/ABradwell',
   // Corrected from the ca. subdomain the old site linked, which is not where
   // the live profile is.
@@ -23,10 +32,10 @@ export const SITE: SiteConfig = {
 
 /** Eighteen words. The hero subtext cap is twenty. */
 export const HERO_SUBTEXT =
-  'Engineering Team Lead at zally in Manchester. I build biometric authentication systems and the cloud they run on.'
+  'Extensive hands-on experience with Ml-Ops, Scalable Pipeline, API Security Automation, Codebase Security Suites, Biometric Authentication, App Development, and more'
 
 export const ABOUT = [
-  'I am a software engineer in Manchester, working on biometric authentication. I joined zally as a founding member of the development team and now lead it.',
-  'Before that I read Computer Science and Psychology at the University of Ottawa, which is a less unusual pairing than it sounds: most of what makes authentication hard is human, not cryptographic.',
-  'Away from work I write and perform music, climb, and read. If you want to talk about any of that, or about work, the door is open.',
+  'I am a Manchester-based full-stack engineer, who is currently working within the biometric authentication industry. I am pursuing positions which have a strong sense of ownership, and a chance to lead and grow a team. As a founding member of my current engineering team, I have had the opportunity to learn with, grow with, and eventually lead our many diverse engineering functions.',
+  'These opportunities included SDK development, OAuth compliant development, Flink/Kafka pipelines, OpenAPI & OWASP security compliance, Dashboards & Interfaces, and a range of ML-Ops operations. I have helped oversee our companies transition into a fully AI-powered development team, while championing modern engineering mindsets and the shift from ticket-focus to outcome-focused.',
+  "Away from work I write and perform music (its deceivingly sad, don't google it), boulder (classic tech bro behaviour), and read. Appreciate you stopping by the site, please do reach out on LinkedIn!",
 ] as const

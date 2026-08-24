@@ -2,6 +2,7 @@ import { stationFor } from '@/content/stations'
 import { TERRAIN } from '@/content/terrain.generated'
 import { Z } from '@/lib/z'
 
+import { ORB_CLASS, ORB_DISC, SKY_CLASS, hazeStyle } from './atmosphere'
 import { terrainLayerStyle, waterStyle } from './terrain-mask'
 
 /**
@@ -30,15 +31,10 @@ export function LandscapeStatic({ pathname = '/' }: { pathname?: string }) {
         className="pointer-events-none fixed inset-0 overflow-hidden"
         style={{ zIndex: Z.landscapeFar }}
       >
-        <div className="absolute inset-x-0 -top-[10dvh] h-[150dvh] bg-[linear-gradient(to_bottom,var(--sky-high)_0%,var(--sky-mid)_46%,var(--sky-low)_100%)]" />
-        <div className="absolute inset-x-0 top-[44dvh] h-[54dvh] bg-[radial-gradient(78%_58%_at_50%_50%,var(--haze)_0%,transparent_72%)]" />
-        <div
-          className="absolute top-[46dvh] right-[10vw] size-[clamp(72px,20vw,104px)] rounded-full md:top-[17dvh] md:right-[9vw] md:size-[clamp(132px,14vw,208px)]"
-          style={{
-            background:
-              'radial-gradient(circle at 38% 34%, var(--orb-core) 0%, var(--orb) 62%, color-mix(in oklab, var(--orb) 88%, var(--terrain-1)) 100%)',
-          }}
-        />
+        <div className={SKY_CLASS} />
+        <div style={hazeStyle()} />
+        <div className={`${ORB_CLASS} rounded-full`} style={{ background: ORB_DISC }} />
+        {/* Far to near, with the river in front of row 2. Same order as Landscape. */}
         {far.map((l) => (
           <div key={l.depth} style={terrainLayerStyle(l)} />
         ))}

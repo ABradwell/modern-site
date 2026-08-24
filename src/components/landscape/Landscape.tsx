@@ -17,6 +17,7 @@ import { TERRAIN } from '@/content/terrain.generated'
 import { PAN_SPRING, SPEED } from '@/lib/motion'
 import { Z } from '@/lib/z'
 
+import { SKY_CLASS, hazeStyle } from './atmosphere'
 import { Orb } from './Orb'
 import { terrainLayerStyle, waterStyle } from './terrain-mask'
 
@@ -80,8 +81,15 @@ export function Landscape() {
             <>
               <DepthLayer biome={station} depth={4} scrollY={scrollY} still={reduce} />
               <DepthLayer biome={station} depth={3} scrollY={scrollY} still={reduce} />
-              <WaterLayer biome={station} scrollY={scrollY} still={reduce} />
               <DepthLayer biome={station} depth={2} scrollY={scrollY} still={reduce} />
+              {/*
+                The river paints AFTER row 2, not before it. Water lies in the
+                ground plane in front of that row, and behind it the row's solid
+                ground hides the ribbon completely, which is what an earlier
+                version did and why the river kept having to be shoved up into
+                the sky to be visible at all.
+              */}
+              <WaterLayer biome={station} scrollY={scrollY} still={reduce} />
             </>
           )}
         </PanStrip>
@@ -174,25 +182,12 @@ function useTravel(scrollY: MotionValue<number>, speed: number, still: boolean) 
 
 function Sky({ scrollY, still }: { scrollY: MotionValue<number>; still: boolean }) {
   const y = useTravel(scrollY, SPEED.sky, still)
-  return (
-    <motion.div
-      style={{ y }}
-      className="absolute inset-x-0 -top-[10dvh] h-[150dvh] bg-[linear-gradient(to_bottom,var(--sky-high)_0%,var(--sky-mid)_46%,var(--sky-low)_100%)]"
-    />
-  )
+  return <motion.div style={{ y }} className={SKY_CLASS} />
 }
 
 function Haze({ scrollY, still }: { scrollY: MotionValue<number>; still: boolean }) {
   const y = useTravel(scrollY, SPEED.haze, still)
-  // The radial is centred inside the element, not on its edge. Centred on the
-  // bottom edge it drew a hard horizontal line across the whole viewport at
-  // exactly the point the element ended.
-  return (
-    <motion.div
-      style={{ y }}
-      className="absolute inset-x-0 top-[44dvh] h-[54dvh] bg-[radial-gradient(78%_58%_at_50%_50%,var(--haze)_0%,transparent_72%)]"
-    />
-  )
+  return <motion.div style={{ ...hazeStyle(), y }} />
 }
 
 // ---------------------------------------------------------------------------

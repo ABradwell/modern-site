@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { BrandMark } from '@/components/brand/BrandMark'
 import { Section, StationContent } from '@/components/layout/StationContent'
+import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { SKILLS, WALL_GROUPS, skillsIn } from '@/content/skills'
@@ -45,6 +46,8 @@ export default function SkillsPage() {
           What I reach for, grouped by where it sits in the stack. Everything here has
           been used in anger, not just read about.
         </p>
+
+        <ScrollCue href="#wall" />
       </StationHero>
 
       <StationContent>
