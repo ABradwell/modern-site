@@ -8,14 +8,15 @@ import { Z } from '@/lib/z'
  *
  * Opaque, unlike the hero, because this is where the landscape stops being the
  * subject. The top offset is what keeps the first heading clear of the near
- * terrain, whose ground line is capped at 106dvh and whose body fades out by
- * 130dvh. See CONTENT_OFFSET_DVH.
+ * terrain, whose ground line is capped at 106 scene units and whose body fades
+ * out by 130. Measured in --vu, not dvh, so it tracks the hero's floor on short
+ * landscape viewports instead of collapsing with them. See CONTENT_OFFSET_DVH.
  */
 export function StationContent({ children }: { children: ReactNode }) {
   return (
     <div
       className="relative"
-      style={{ zIndex: Z.content, paddingTop: `${CONTENT_OFFSET_DVH}dvh` }}
+      style={{ zIndex: Z.content, paddingTop: `calc(var(--vu) * ${CONTENT_OFFSET_DVH})` }}
     >
       <div className="bg-background">{children}</div>
     </div>

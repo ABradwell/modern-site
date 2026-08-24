@@ -311,6 +311,60 @@
 }
 
 /* ---------------------------------------------------------------------------
+   5b. SCENE HEIGHT
+
+   The landscape is one composition measured in hundredths of a screen:
+   horizon, crests, ground lines, the offset at which page content begins. In
+   portrait that reads correctly at every size. Rotate a phone to landscape and
+   the viewport collapses to around 390px, the whole composition scales down
+   with it, and the type does not, so hero copy runs straight down into the
+   treeline. The words end up compressed into the trees.
+
+   So the composition is measured against --scene rather than against the
+   viewport, and --scene has a floor. Above the floor it is exactly 100svh and
+   nothing changes. Below it the scene stops shrinking, the hero keeps the room
+   its words need, and the reader scrolls a little further instead of reading
+   through a canopy.
+
+   --vu is one percent of the scene: the unit every `dvh` in the composition
+   used to be. Terrain, haze, orb, hero height and content offset all read from
+   it, so they cannot drift apart.
+
+   svh, never dvh and never vh. All three name the same viewport and differ only
+   in which address-bar state they measure, and in whether they hold still.
+
+   vh is the LARGE viewport, measured with the bar hidden. At rest the
+   composition is then taller than the screen and the ground line sits below the
+   fold, which is why this was never vh.
+
+   dvh is the LIVE value, and that is the trap this unit exists to avoid. It
+   re-resolves as the address bar retracts, and a mobile browser does not retract
+   the bar continuously under the finger: it commits the change in a snap, most
+   often at the moment the finger lifts. Every consumer of --vu then re-lays out
+   in the same frame. The hero grows by the height of the bar, the content offset
+   grows another fifth of that, and the scroll position does not move to match,
+   so the page lurches on release. It reads as the layout locking into place,
+   because that is exactly what it is.
+
+   svh is the SMALL viewport, measured with the bar shown, and it is STABLE: it
+   does not change when the bar retracts. The composition is laid out once and
+   stays where it was put. The cost is that with the bar hidden the hero is a
+   bar-height shorter than the screen, and that is invisible here. The landscape
+   is fixed to the viewport rather than to the scene, and its bands already
+   overhang to 118 and 130 units, so the uncovered strip is terrain that was
+   being drawn anyway.
+--------------------------------------------------------------------------- */
+:root {
+  /* 48rem is the floor, not a guess at a device. It is the shortest scene in
+     which the tallest hero on the site (the landing page: two display lines, a
+     four-line paragraph, two buttons and the scroll cue) still finishes clear
+     of the near treeline, whose crests top out at 76 scene units. Lower it and
+     the copy touches the canopy again. */
+  --scene: max(100svh, 48rem);
+  --vu: calc(var(--scene) / 100);
+}
+
+/* ---------------------------------------------------------------------------
    6. BASE
 --------------------------------------------------------------------------- */
 @layer base {

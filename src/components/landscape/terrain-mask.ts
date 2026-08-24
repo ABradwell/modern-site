@@ -3,7 +3,10 @@ import type { CSSProperties } from 'react'
 import type { TerrainLayer, TerrainWater } from '@/content/terrain.generated'
 
 /**
- * How far a layer's solid ground extends below its own ground line, in dvh.
+ * How far a layer's solid ground extends below its own ground line, in scene
+ * units (--vu, one percent of --scene). Every number in this file is in that
+ * unit rather than in dvh: the terrain has to shrink and grow in lockstep with
+ * the hero, and the hero stops shrinking at the scene floor.
  *
  * This is a BAND, not a floor, and the distinction matters. An earlier version
  * ran every layer down to a fixed 168dvh, which gave the near band a 60dvh slab
@@ -70,13 +73,13 @@ function tile(layer: TerrainLayer): string {
 export function terrainLayerStyle(layer: TerrainLayer): CSSProperties {
   const top = layer.bottom - layer.crest
   const height = layer.crest + BODY_DVH
-  const bodyHeight = `calc(${height}dvh - ${layer.crest}dvh + 1px)`
+  const bodyHeight = `calc(var(--vu) * ${height} - var(--vu) * ${layer.crest} + 1px)`
 
   const masks = [
     tile(layer),
     `linear-gradient(to bottom, #000 0 ${(SOLID_TO * 100).toFixed(0)}%, transparent 100%)`,
   ].join(', ')
-  const sizes = [`auto ${layer.crest}dvh`, `100% ${bodyHeight}`].join(', ')
+  const sizes = [`auto calc(var(--vu) * ${layer.crest})`, `100% ${bodyHeight}`].join(', ')
   const positions = ['top center', 'bottom center'].join(', ')
   const repeats = ['repeat-x', 'no-repeat'].join(', ')
 
@@ -84,8 +87,8 @@ export function terrainLayerStyle(layer: TerrainLayer): CSSProperties {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: `${top}dvh`,
-    height: `${height}dvh`,
+    top: `calc(var(--vu) * ${top})`,
+    height: `calc(var(--vu) * ${height})`,
     backgroundColor: `var(--terrain-${layer.fill})`,
     maskImage: masks,
     maskSize: sizes,
@@ -105,14 +108,14 @@ export function waterStyle(water: TerrainWater): CSSProperties {
   const mask = svgUrl(
     `<svg xmlns='http://www.w3.org/2000/svg' width='${water.w}' height='${water.h}' viewBox='0 0 ${water.w} ${water.h}'><path fill='%23000' d='${water.d}'/></svg>`,
   )
-  const size = `auto ${water.height}dvh`
+  const size = `auto calc(var(--vu) * ${water.height})`
 
   return {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: `${top}dvh`,
-    height: `${water.height}dvh`,
+    top: `calc(var(--vu) * ${top})`,
+    height: `calc(var(--vu) * ${water.height})`,
     backgroundColor: 'var(--water)',
     maskImage: mask,
     maskSize: size,

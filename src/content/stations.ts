@@ -59,6 +59,25 @@ export const STATIONS: readonly Station[] = [
 ] as const
 
 /**
+ * Destinations that are not stations.
+ *
+ * Deliberately kept out of STATIONS. That array is the geography: its order
+ * sets the pan offset, its length divides the terrain strip, and every entry
+ * needs a biome and a route the exporter can find. An off-site link has none of
+ * those, so it rides alongside the trail rather than on it. The nav renders
+ * these after the stations; the marker never travels to them, which is correct,
+ * because you are never "here".
+ */
+export interface ExternalLink {
+  readonly href: string
+  readonly label: string
+}
+
+export const EXTERNAL_LINKS: readonly ExternalLink[] = [
+  { href: 'https://www.bradwellmusic.co.uk', label: 'Music' },
+] as const
+
+/**
  * Index of the station a pathname belongs to.
  *
  * Anything off the trail, a 404 included, resolves to the forest. That is a

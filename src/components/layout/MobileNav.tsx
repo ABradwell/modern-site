@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { List } from '@phosphor-icons/react/dist/ssr'
+import { ArrowUpRight, List } from '@phosphor-icons/react/dist/ssr'
 import { useState } from 'react'
 
-import { STATIONS, stationIndex } from '@/content/stations'
+import { EXTERNAL_LINKS, STATIONS, stationIndex } from '@/content/stations'
 import { SITE } from '@/content/site'
 import { ThemeControl } from '@/components/system/theme-control'
 import {
@@ -65,6 +65,22 @@ export function MobileNav() {
                 >
                   {station.label}
                 </Link>
+              </li>
+            ))}
+
+            {EXTERNAL_LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-11 items-center border-b border-border text-base text-muted-foreground"
+                >
+                  {link.label}
+                  <ArrowUpRight aria-hidden className="ml-1 size-3.5" weight="regular" />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
               </li>
             ))}
           </ul>

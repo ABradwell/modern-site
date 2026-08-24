@@ -39,7 +39,7 @@ export default function GlobalError({
       <body
         style={{
           margin: 0,
-          minHeight: '100dvh',
+          minHeight: '100svh',
           display: 'flex',
           alignItems: 'center',
           backgroundColor: bg,
