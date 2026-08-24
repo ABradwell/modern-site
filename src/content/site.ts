@@ -32,7 +32,7 @@ export const SITE: SiteConfig = {
 
 /** Eighteen words. The hero subtext cap is twenty. */
 export const HERO_SUBTEXT =
-  'Extensive hands-on experience with Ml-Ops, Scalable Pipeline, API Security Automation, Codebase Security Suites, Biometric Authentication, App Development, and more'
+  'Extensive hands-on experience with Cloud Architecture, ML-Ops, Scalable Pipelines, API Security Automation, Codebase Security Suites, Biometric Authentication, App Development, and more'
 
 export const ABOUT = [
   'I am a Manchester-based full-stack engineer, who is currently working within the biometric authentication industry. I am pursuing positions which have a strong sense of ownership, and a chance to lead and grow a team. As a founding member of my current engineering team, I have had the opportunity to learn with, grow with, and eventually lead our many diverse engineering functions.',

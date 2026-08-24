@@ -72,9 +72,12 @@ export const SPEED = {
 } as const
 
 /**
- * Where page content begins, in dvh below the end of the hero.
+ * Where page content begins, in SCENE UNITS below the end of the hero. One
+ * scene unit is one percent of --scene, which is 100dvh with a floor under it;
+ * see globals.css. Reading dvh here instead would let content ride up into the
+ * terrain the moment a phone is rotated.
  *
- * With a 100dvh hero on every route this puts content at an absolute 120dvh,
+ * With a full-scene hero on every route this puts content at an absolute 120,
  * which is 2dvh clear of the furthest the foreground treeline can reach. See the
  * depth-1 cap in scripts/lib/terrain-config.mjs: the two numbers are a pair, and
  * raising either without the other puts terrain back on top of type.

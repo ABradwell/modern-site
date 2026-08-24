@@ -13,16 +13,19 @@ import { Z } from '@/lib/z'
  * or it would paint over the sky.
  *
  * ONE HEIGHT ON EVERY ROUTE. The landscape is a fixed composition measured in
- * absolute dvh, so where content begins has to be absolute too. Inner pages
- * originally had shorter heroes, which slid their content up into the near
- * treeline: on the mountains station the foreground band ran to 130dvh while
- * content began at 74dvh, and the result was a dark ridge painted across the
- * first heading. Same hero height everywhere, content at 120dvh everywhere,
- * foreground band capped at 118dvh, and the collision cannot recur.
+ * absolute scene units, so where content begins has to be absolute too. Inner
+ * pages originally had shorter heroes, which slid their content up into the
+ * near treeline: on the mountains station the foreground band ran to 130 while
+ * content began at 74, and the result was a dark ridge painted across the first
+ * heading. Same hero height everywhere, content at 120 everywhere, foreground
+ * band capped at 118, and the collision cannot recur.
  *
- * min-h in dvh, never h-screen. On iOS Safari vh is measured against the
- * address bar's collapsed state, so h-screen makes the whole composition jump
- * the first time the reader scrolls.
+ * min-h in SCENE units, never h-screen and never a bare 100dvh. The scene has
+ * a floor (see --scene in globals.css), and it has one because of landscape
+ * phones: at a 390px viewport a 100dvh hero is shorter than its own copy, so
+ * the headline, the paragraph and the buttons were squeezed down into the
+ * treeline. The terrain reads from the same unit, so the whole composition
+ * stops shrinking together and the copy keeps its clearance at any rotation.
  *
  * pt-28 clears the 64px fixed header and stays inside the hero top-padding cap.
  * The copy is not pushed to the vertical centre with padding; its position comes
@@ -42,7 +45,7 @@ export function StationHero({ children }: { children: ReactNode }) {
   return (
     <section
       aria-labelledby="station-title"
-      className="relative min-h-[100dvh] pt-28"
+      className="relative min-h-[var(--scene)] pt-28"
       style={{ zIndex: Z.content }}
     >
       <motion.div

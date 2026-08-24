@@ -34,7 +34,7 @@ export default function Error({
 
   return (
     <section
-      className="relative flex min-h-[100dvh] items-center pt-28"
+      className="relative flex min-h-[var(--scene)] items-center pt-28"
       style={{ zIndex: Z.content }}
     >
       <div className="mx-auto w-full max-w-[1400px] px-4 md:px-8">

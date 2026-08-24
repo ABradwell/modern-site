@@ -64,8 +64,8 @@ export default function ExperiencePage() {
           Experience
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          Where I have worked, what I built there, and the tools it was built with.
-          Everything here has been used in anger, not just read about.
+          Moving to the UK in 2023, my inital stoming ground was working at the spoons in
+          Burton on Trent. Funnily enough, that job didn&apos;t make the list below.
         </p>
 
         <ScrollCue href="#roles" />

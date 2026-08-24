@@ -82,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-scroll-behavior="smooth"
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="min-h-[100dvh] antialiased">
+      <body className="min-h-[100svh] antialiased">
         <script
           type="application/ld+json"
           // Static, author-controlled JSON. No user input reaches this.

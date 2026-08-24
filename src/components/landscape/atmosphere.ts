@@ -5,6 +5,10 @@ import { HORIZON_DVH } from '@/content/terrain.generated'
 /**
  * Sky, haze and orb, in one place.
  *
+ * Every vertical measurement here is in --vu, one percent of --scene, which is
+ * the same unit the terrain and the hero use. See globals.css: the scene has a
+ * floor so a rotated phone does not compress the composition down onto the copy.
+ *
  * Landscape and LandscapeStatic are deliberately separate components: the still
  * frame has no hooks and nothing that can throw while handling the first throw.
  * But they have to draw the SAME sky, and when these were inline in both files
@@ -13,7 +17,7 @@ import { HORIZON_DVH } from '@/content/terrain.generated'
  */
 
 export const SKY_CLASS =
-  'absolute inset-x-0 -top-[10dvh] h-[150dvh] bg-[linear-gradient(to_bottom,var(--sky-high)_0%,var(--sky-mid)_46%,var(--sky-low)_100%)]'
+  'absolute inset-x-0 top-[calc(var(--vu)*-10)] h-[calc(var(--vu)*150)] bg-[linear-gradient(to_bottom,var(--sky-high)_0%,var(--sky-mid)_46%,var(--sky-low)_100%)]'
 
 /**
  * Atmospheric haze, centred on the horizon.
@@ -39,8 +43,8 @@ export function hazeStyle(): CSSProperties {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: `${HORIZON_DVH - HAZE_DVH / 2}dvh`,
-    height: `${HAZE_DVH}dvh`,
+    top: `calc(var(--vu) * ${HORIZON_DVH - HAZE_DVH / 2})`,
+    height: `calc(var(--vu) * ${HAZE_DVH})`,
     background: 'radial-gradient(78% 58% at 50% 50%, var(--haze) 0%, transparent 72%)',
   }
 }
@@ -50,7 +54,7 @@ export function hazeStyle(): CSSProperties {
  * the desktop position sits directly behind the second line of the headline.
  */
 export const ORB_CLASS =
-  'absolute top-[46dvh] right-[10vw] size-[clamp(72px,20vw,104px)] md:top-[17dvh] md:right-[9vw] md:size-[clamp(132px,14vw,208px)]'
+  'absolute top-[calc(var(--vu)*46)] right-[10vw] size-[clamp(72px,20vw,104px)] md:top-[calc(var(--vu)*17)] md:right-[9vw] md:size-[clamp(132px,14vw,208px)]'
 
 export const ORB_DISC =
   'radial-gradient(circle at 38% 34%, var(--orb-core) 0%, var(--orb) 62%, color-mix(in oklab, var(--orb) 88%, var(--terrain-1)) 100%)'

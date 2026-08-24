@@ -30,7 +30,7 @@ export function SiteHeader() {
 
         <div className="flex-1" />
 
-        <div className="hidden self-end md:block md:min-w-[26rem]">
+        <div className="hidden self-end md:block md:min-w-[26rem] lg:min-w-[32rem]">
           <TrailNav />
         </div>
 
