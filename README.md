@@ -247,6 +247,57 @@ The Node version comes from `engines.node` in `package.json`. It is a `>=` range
 rather than a pin, so App Platform resolves it to the newest Node it offers. Pin
 it to a major there if a future Node release breaks the build.
 
+### Domains and DNS
+
+Both hostnames are declared in the `domains:` block of `.do/app.yaml`:
+
+| Host                    | Type      | Behaviour                                  |
+| ----------------------- | --------- | ------------------------------------------ |
+| `aidenbradwell.com`     | `PRIMARY` | Serves the site.                           |
+| `www.aidenbradwell.com` | `ALIAS`   | Certificate issued, redirects to the apex. |
+
+The nameservers are DigitalOcean's (`ns1`/`ns2`/`ns3.digitalocean.com`), and
+`zone: aidenbradwell.com` on each entry tells App Platform to manage the records
+in that zone itself. Applying the spec is what starts certificate issuance:
+
+```bash
+doctl apps list                                   # find the app id
+doctl apps update <app-id> --spec .do/app.yaml
+doctl apps get <app-id> --format DefaultIngress,Domains
+```
+
+**Never hand-write an A record for either name.** App Platform sits behind a
+shared CDN edge that routes by SNI, so the IP a hostname resolves to is not what
+attaches it to the app. Registering the domain on the app is. A manual A record
+pointed at an edge IP therefore resolves, reaches the edge, and then fails
+because no certificate exists for that name:
+
+```
+https://www.aidenbradwell.com  → sslv3 alert handshake failure
+                                 (ERR_SSL_VERSION_OR_CIPHER_MISMATCH)
+http://www.aidenbradwell.com   → 409 Conflict, "error code: 1001"
+```
+
+That failure mode is worth recognising, because the apex keeps serving normally
+throughout and the site looks down only to anyone arriving on `www`, which
+includes anyone arriving from a search result indexed under that hostname.
+
+The managed records carry a 30 second TTL and rotate across several edge IPs. A
+record with a long TTL pinned to a single IP is hand-written drift; delete it and
+let App Platform recreate it.
+
+To verify after a change:
+
+```bash
+dig +short aidenbradwell.com www.aidenbradwell.com
+curl -sSI https://aidenbradwell.com     | head -1   # expect 200
+curl -sSI https://www.aidenbradwell.com | head -1   # expect 301 to the apex
+```
+
+Canonical URLs, `sitemap.xml` and `robots.txt` all point at the apex; the source
+of that is `SITE.url` in `src/content/site.ts`. Keep the apex `PRIMARY` so those
+stay consistent.
+
 ## Content
 
 All content is typed modules under `src/content/`, so pages are pure
