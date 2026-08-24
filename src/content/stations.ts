@@ -10,8 +10,23 @@ import type { BiomeKey } from './terrain.generated'
  * the trail marker alike.
  *
  * The progression is deliberate rather than decorative. You start on the forest
- * floor, cross open ground, climb through foothills, reach the peaks, and end
- * above the cloud line looking at what has not been written yet.
+ * floor, cross open ground, reach the peaks, and end above the cloud line
+ * looking at what has not been written yet.
+ *
+ * FOUR STATIONS, not five. Skills and experience were separate pages and are now
+ * one, so `/experience` is gone and `/skills` carries both under the label
+ * "Experience". That leaves the `foothills` biome generated but unreferenced:
+ * the terrain config still declares it and `pnpm terrain` still emits it, which
+ * costs about a fifth of the generated file and nothing at runtime, since only
+ * the biomes named here are ever mounted. It is left in place rather than
+ * deleted because it is the obvious home for a fifth station if one arrives.
+ *
+ * Two things have to move with this list or the build breaks. STATIONS in
+ * scripts/lib/stations.mjs is the plain-Node copy that verify-export.mjs checks
+ * against out/, and it is what caught this route rename by failing the build.
+ * The pan strip in Landscape.tsx derives both its width and its per-station
+ * width from STATIONS.length, so adding or removing a station here needs no
+ * change there. It was hardcoded for five and is not any more.
  */
 export interface Station {
   readonly href: string

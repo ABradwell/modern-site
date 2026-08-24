@@ -6,6 +6,7 @@ import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { ARTICLES, ARTICLES_NOTE } from '@/content/articles'
+import { CHIP, PROSE, PROSE_TIGHT } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Writing',
@@ -54,14 +55,16 @@ export default function ArticlesPage() {
                   rel="noreferrer"
                   className="group grid gap-3 py-9 md:grid-cols-[3rem_1fr_auto] md:items-baseline md:gap-8"
                 >
-                  <span className="tabular font-mono text-xs text-muted-foreground">
+                  <span className={`tabular ${CHIP} text-muted-foreground`}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span>
                     <span className="block text-lg font-medium text-foreground md:text-xl">
                       {article.title}
                     </span>
-                    <span className="mt-2 block max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
+                    <span
+                      className={`mt-2 block max-w-[62ch] ${PROSE_TIGHT} text-muted-foreground`}
+                    >
                       {article.summary}
                     </span>
                   </span>
@@ -76,9 +79,7 @@ export default function ArticlesPage() {
         </Section>
 
         <Section id="next" title="What is coming">
-          <p className="max-w-[62ch] text-base leading-relaxed text-foreground/90">
-            {ARTICLES_NOTE}
-          </p>
+          <p className={`max-w-[62ch] ${PROSE} text-foreground/90`}>{ARTICLES_NOTE}</p>
         </Section>
       </StationContent>
     </>

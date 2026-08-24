@@ -1,19 +1,31 @@
 # aidenbradwell.com
 
-A static personal site. Five pages, one continuous landscape.
+A static personal site. Four pages, one continuous landscape.
 
 The idea the whole build hangs off: the site is a single landscape read west to
 east, and each route is a station along it. Scrolling at a station lifts the
 terrain and lets the page rise out of it. Navigating pans the landscape sideways.
 The sun overhead becomes a moon when the reader's colour scheme is dark.
 
-| Route         | Station              | Terrain                            |
-| ------------- | -------------------- | ---------------------------------- |
-| `/`           | Forest               | conifer spires                     |
-| `/skills`     | Plains               | grass, sentinel poplars, a river   |
-| `/experience` | Foothills            | rolling smoothed ridges            |
-| `/projects`   | Mountains            | angular fractal ridges             |
-| `/articles`   | Above the cloud line | rock, a cloud sea, distant summits |
+| Route       | Station              | Terrain                            |
+| ----------- | -------------------- | ---------------------------------- |
+| `/`         | Forest               | conifer spires                     |
+| `/skills`   | Plains               | grass, sentinel poplars, a river   |
+| `/projects` | Mountains            | angular fractal ridges             |
+| `/articles` | Above the cloud line | rock, a cloud sea, distant summits |
+
+`/skills` is labelled **Experience** in the navigation and carries roles, core
+competencies and education together. It used to be two routes; merging them
+retired `/experience` and, with it, the `foothills` biome, which the terrain
+config still declares and `pnpm terrain` still emits. Nothing mounts it, so it
+costs a fifth of the generated file and nothing at runtime. It is the obvious
+home for a fifth station if one arrives.
+
+Neighbouring biomes overlap by 10vw and the eastern one fades in across the
+overlap, so a pan never shows the vertical step where one biome's crest tile was
+cut mid-tree and the next began mid-saddle. The overlap sits west of each
+station, off-screen at rest, so a station shows only its own biome while it is
+being read.
 
 ## Commands
 
@@ -137,6 +149,13 @@ again if undone:
 
 ## Colour
 
+Body copy runs on four steps, defined once in `src/lib/type.ts`: `PROSE` for
+section paragraphs, `PROSE_TIGHT` for card and caveat copy, `META` for labels and
+dates, `CHIP` for technology marks. Headings, nav and buttons sit outside it on
+purpose. Before it existed the same kind of paragraph appeared at `text-sm` on
+one page and `text-xl` on another, with three arbitrary `text-[0.6875rem]`
+values scattered through the cards.
+
 Five source colours, two hue families: warm earth at 54 to 75 degrees and green at
 119 to 123. Max chroma is 0.070, which is why nothing here can go neon.
 
@@ -156,8 +175,13 @@ dark mode silently stops working while appearing to be wired up.
 
 ## Deploying
 
-Build output is `out/`.
+Build output is `out/`. Every host below builds with `pnpm build` and serves that
+directory. `trailingSlash: true` in `next.config.ts` puts each station at
+`out/skills/index.html` rather than `out/skills.html`; that is required by
+DigitalOcean and is what the other hosts want anyway.
 
+- **DigitalOcean App Platform.** The configuration lives in `.do/app.yaml`. See
+  below.
 - **Vercel.** Detected automatically. Security headers come from `vercel.json`.
 - **Cloudflare Pages.** Build `pnpm build`, output directory `out`. Headers come
   from `public/_headers`, which Next copies to the deploy root.
@@ -165,6 +189,51 @@ Build output is `out/`.
   Jekyll strips `/_next/*` and every asset 404s, which looks like a build failure
   but is not. A project page also needs `basePath` and `assetPrefix`. GitHub Pages
   cannot set response headers at all.
+
+### DigitalOcean App Platform
+
+`.do/app.yaml` is the source of truth. App Platform does not read it on push, so
+it is applied with `doctl`:
+
+```bash
+doctl auth init                                   # once
+doctl apps create --spec .do/app.yaml             # first deploy
+doctl apps list                                   # find the app id
+doctl apps update <app-id> --spec .do/app.yaml    # after editing the spec
+```
+
+After the app exists, `deploy_on_push: true` handles ordinary commits to `main`
+on its own. `doctl` is only needed again when the spec itself changes. Editing
+the app in the dashboard instead is drift, and the next `doctl apps update`
+reverts it.
+
+Creating the app through the dashboard works too. The equivalent settings are
+resource type Static Site, build command `pnpm build`, output directory `out`,
+index document `index.html`, error document `404.html`.
+
+Three things about App Platform specifically.
+
+**Extension-less paths do not resolve.** App Platform serves the output as a
+plain file tree and never tries `<path>.html`, which is the whole reason for
+`trailingSlash: true`. Revert that and `/skills` 404s in production while local
+preview stays green. `scripts/verify-export.mjs` asserts the directory-index
+layout on every build so the failure lands there instead.
+
+**Use `error_document`, not `catchall_document`.** They are mutually exclusive.
+A catchall would serve the homepage with a 200 for every mistyped URL, so broken
+links would look healthy to a visitor and to a crawler.
+
+**Static sites cannot set response headers.** There is no App Platform
+equivalent of `vercel.json` or `public/_headers`, so the CSP and the immutable
+cache header on `/_next/static/*` do not apply on DigitalOcean. Both files stay
+in the repo for the hosts that do honour them. Getting headers on DigitalOcean
+means moving off the static-site component onto a service, which is a real
+server and a real bill; it is not worth it for a static portfolio, but it is the
+only route if the CSP becomes a requirement.
+
+The Node version comes from `engines.node` in `package.json`. It is a `>=` range
+rather than a pin, so App Platform resolves it to the newest Node it offers. Pin
+it to a major there if a future Node release breaks the build.
 
 ## Content
 

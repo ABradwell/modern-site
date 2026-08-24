@@ -20,12 +20,18 @@ import type { IconSkillId } from '@/content/skills'
  * Typed as Record<IconSkillId, ...>, so adding an icon-backed skill without
  * wiring its mark is a compile error rather than a blank cell on the page.
  */
-type BrandIcon = (props: {
-  color?: string
-  size?: number | string
-  title?: string
-  className?: string
-}) => React.ReactNode
+/**
+ * Structural props only, plus the SVG passthrough the wall actually uses:
+ * aria-hidden, because the pill sets the name in text beside the mark, and
+ * style, for the per-mark optical correction. Widened from a closed four-key
+ * shape, which silently rejected both.
+ */
+type BrandIcon = (
+  props: React.SVGProps<SVGSVGElement> & {
+    size?: number | string
+    title?: string
+  },
+) => React.ReactNode
 
 export const BRAND_MARKS: Record<IconSkillId, BrandIcon> = {
   python: Icons.SiPython,

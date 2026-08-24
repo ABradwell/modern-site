@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr'
 
 import { SITE } from '@/content/site'
+import { CHIP, META } from '@/lib/type'
 
 /**
  * The ways to reach a person, as a list.
@@ -99,8 +100,8 @@ export function ContactRoutes() {
               aria-hidden
             />
             <span className="min-w-0 flex-1">
-              <span className="block text-xs text-muted-foreground">{route.label}</span>
-              <span className="block truncate text-sm font-medium text-foreground">
+              <span className={`block ${CHIP} text-muted-foreground`}>{route.label}</span>
+              <span className={`block truncate ${META} font-medium text-foreground`}>
                 {route.value}
               </span>
             </span>

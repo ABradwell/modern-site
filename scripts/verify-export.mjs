@@ -6,7 +6,14 @@
  * when a stranger hits a bad URL or shares a link. Turning those into a
  * non-zero exit is the whole point.
  *
- *   out/404.html        the stylised 404. Absent if trailingSlash ever changes.
+ *   out/404.html        the stylised 404. Every static host looks for exactly
+ *                       this filename. Next emits it alongside 404/index.html
+ *                       under trailingSlash, and only the flat one is honoured.
+ *   station/index.html  the directory-index layout. DigitalOcean App Platform
+ *                       does not try <path>.html for an extension-less request,
+ *                       so out/skills.html would 404 there while passing local
+ *                       preview. Asserting the directory form catches a revert
+ *                       of `trailingSlash` at build rather than at deploy.
  *   opengraph-image.png the social card. Absent if the generator was not run.
  *   sitemap / robots    the metadata routes, which are easy to break silently.
  *   .nojekyll           without it GitHub Pages strips /_next/* and every asset
@@ -38,10 +45,14 @@ const required = [
   ['out/icon.svg', 'favicon'],
 ]
 
-// Every station must have produced a real HTML document.
+// Every station must have produced a real HTML document, at the directory-index
+// path rather than the flat one. See the note on trailingSlash in next.config.ts.
 for (const station of STATIONS) {
   if (station === '/') continue
-  required.push([`out${station}.html`, `the ${station} station`])
+  required.push([
+    `out${station}/index.html`,
+    `the ${station} station (directory-index form, which is the only form DigitalOcean App Platform serves)`,
+  ])
 }
 
 const problems = []
