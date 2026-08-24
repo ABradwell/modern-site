@@ -14,7 +14,7 @@ export const PROJECTS: readonly Project[] = [
     summary:
       'A player for ten original tracks, built around a gramophone transport and shareable links.',
     detail:
-      'A personal favourite of mine, a Vite & React web app which includes a cute record player, and streams a recently recorded album.',
+      'A personal favourite of mine, a Vite & React web app which includes a cute record player and streams a recently recorded album.',
     stack: ['typescript', 'react', 'vite'],
     repo: 'https://github.com/ABradwell/bradwell-music-website',
     image: {
