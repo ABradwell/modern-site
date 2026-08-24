@@ -53,10 +53,18 @@ export default function HomePage() {
             them from a hero button is abrupt, does nothing at all if they have
             no client configured, and offers no alternative. This scrolls to the
             contact block instead, where every route is on show.
+
+            SOLID IN DARK MODE, transparent in light. The outline treatment lets
+            the sky through, and in dark mode the cream moon passes behind this
+            button, which put a bright disc under the label. bg-background is
+            moss-900, within a shade of the sky at this height, so the fill
+            reads as the same air rather than as a panel, and it stops the orb
+            dead. Light mode keeps the transparent outline: the tan sun sits at
+            2.52:1 against the sky and never fights the label.
           */}
           <a
             href="#contact"
-            className="rounded-ctl border border-border-strong px-6 py-3 text-sm font-medium text-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none"
+            className="rounded-ctl border border-border-strong px-6 py-3 text-sm font-medium text-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none dark:bg-background"
           >
             {SITE.contactLabel}
           </a>
