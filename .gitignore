@@ -50,3 +50,16 @@ next-env.d.ts
 # agent git worktrees, full nested checkouts of this repo
 # (also ignored by eslint and prettier)
 .claude/worktrees/
+
+# Screen recordings and video scratch files.
+#
+# An 18MB screen recording was committed to the repo root once, in a public
+# repository, and nothing caught it: the 3MB asset cap in verify-export.mjs only
+# walks out/, and a file sitting at the root never reaches the export. Video
+# that is genuinely part of the site goes in public/, which is exempt below.
+*.mov
+*.mp4
+*.webm
+!public/**/*.mov
+!public/**/*.mp4
+!public/**/*.webm
