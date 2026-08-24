@@ -15,40 +15,57 @@ export const REVEAL_STAGGER = 0.08
 export const REVEAL_VIEWPORT = { once: true, amount: 0.3 } as const
 
 /**
- * Horizontal pan springs, one per depth band.
+ * Horizontal pan between stations. ONE spring, shared by every depth band.
  *
- * Every band targets the SAME offset, so the biomes are perfectly aligned at
- * rest and only diverge mid-transition. Near terrain sweeps past while distant
- * ridges barely shift, which is how parallax works in the world. That is the
- * entire trick, and it costs four animated transforms.
+ * Per-depth stiffness was tried and rejected. It is textbook parallax, and on a
+ * full-viewport slide it was actively unpleasant: bands arriving at different
+ * times read as the world coming apart rather than as depth, and it induced
+ * motion sickness. Depth belongs on the vertical axis, where the reader controls
+ * the rate. Horizontally the landscape moves as one image.
+ *
+ * Damping ratio here is 26 / (2 * sqrt(80)) = 1.45, comfortably overdamped, so
+ * the slide settles without overshoot. A viewport-wide slide that bounces at the
+ * end is the other way to make this motion unpleasant.
  */
-export const PAN_SPRING = {
-  terrain1: { stiffness: 90, damping: 22, mass: 1 },
-  terrain2: { stiffness: 74, damping: 22, mass: 1 },
-  terrain3: { stiffness: 60, damping: 22, mass: 1 },
-  terrain4: { stiffness: 48, damping: 22, mass: 1 },
-  sky: { stiffness: 40, damping: 24, mass: 1 },
+export const PAN_SPRING = { stiffness: 80, damping: 26, mass: 1 } as const
+
+/**
+ * Vertical parallax, as a multiple of scroll distance.
+ *
+ * These are absolute speeds, not relative offsets, because the landscape is
+ * `position: fixed` and therefore moves at 0 by default. To make a fixed layer
+ * behave as if it sat at depth k, translate it by -scrollY * k.
+ *
+ * Parallax speed rises toward the viewer, so the nearest band is fastest. Every
+ * band except terrain1 stays BELOW 1.0, which means page content, moving at
+ * exactly 1.0, gradually rises and covers them. That is the correct reading:
+ * the page comes up out of the landscape.
+ *
+ * terrain1 is a touch ABOVE 1.0 because it is the one band painted in front of
+ * content. It has to drift upward slightly faster than the page so its overlap
+ * with the top of the content block closes as the reader scrolls, instead of
+ * travelling along with the page and sitting on it permanently.
+ *
+ *   sky 0.40  <  haze 0.52  <  terrain4 0.66  <  terrain3 0.76
+ *             <  water 0.82  <  terrain2 0.92  <  CONTENT 1.00  <  terrain1 1.08
+ */
+export const SPEED = {
+  sky: 0.4,
+  orb: 0.4,
+  haze: 0.52,
+  terrain4: 0.66,
+  terrain3: 0.76,
+  water: 0.82,
+  terrain2: 0.92,
+  terrain1: 1.08,
 } as const
 
 /**
- * Vertical parallax depth, expressed as the translateY in vh each layer has
- * reached at scroll progress 1.
+ * Where page content begins, in dvh below the end of the hero.
  *
- * Larger means deeper, because a deeper layer cancels more of the scroll and so
- * appears to move up more slowly. Content cancels nothing, which is why it
- * moves fastest of all and emerges from beneath the near terrain.
+ * With a 100dvh hero on every route this puts content at an absolute 120dvh,
+ * which is 2dvh clear of the furthest the foreground treeline can reach. See the
+ * depth-1 cap in scripts/lib/terrain-config.mjs: the two numbers are a pair, and
+ * raising either without the other puts terrain back on top of type.
  */
-export const DRIFT = {
-  sky: 52,
-  haze: 38,
-  orb: 52,
-  copy: 14,
-  terrain4: 27,
-  terrain3: 19,
-  water: 15,
-  terrain2: 12,
-  terrain1: 6,
-} as const
-
-/** Below md, halve every differential and drop one terrain layer. */
-export const MOBILE_DRIFT_SCALE = 0.5
+export const CONTENT_OFFSET_DVH = 20

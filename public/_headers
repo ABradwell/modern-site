@@ -1,0 +1,15 @@
+# Cloudflare Pages reads this from the deploy root. Next copies public/ verbatim
+# into out/, so the file lands where Cloudflare looks for it.
+#
+# These live here rather than in next.config because `headers` is unsupported
+# under `output: 'export'`. On Vercel the equivalent goes in vercel.json, and on
+# GitHub Pages there is no way to set response headers at all.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

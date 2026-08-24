@@ -43,3 +43,6 @@ next-env.d.ts
 .idea
 .vscode/*
 !.vscode/extensions.json
+
+# terrain contact sheets from `pnpm terrain -- --preview`
+.terrain-preview

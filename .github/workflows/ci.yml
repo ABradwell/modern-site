@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Deliberately before the build. `next lint` was removed in Next 16 and
+      # `next build` no longer lints, so without this step lint and type errors
+      # would reach main with a green tick.
+      - run: pnpm verify
+
+      - run: node scripts/check-contrast.mjs
+
+      # Regenerate the terrain and fail if it differs from what is committed.
+      # The generator is deterministic, so any diff means the committed asset is
+      # stale relative to its source.
+      - run: pnpm terrain
+      - run: git diff --exit-code src/content/terrain.generated.ts
+
+      - run: pnpm build
