@@ -43,10 +43,10 @@ export default function HomePage() {
 
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Link
-            href="/projects"
+            href="/skillz"
             className="rounded-ctl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none"
           >
-            View projects
+            View Resume
           </Link>
           {/*
             An in-page jump, not a mailto. Firing the reader's mail client at

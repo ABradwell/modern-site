@@ -21,11 +21,23 @@ config still declares and `pnpm terrain` still emits. Nothing mounts it, so it
 costs a fifth of the generated file and nothing at runtime. It is the obvious
 home for a fifth station if one arrives.
 
-Neighbouring biomes overlap by 10vw and the eastern one fades in across the
-overlap, so a pan never shows the vertical step where one biome's crest tile was
-cut mid-tree and the next began mid-saddle. The overlap sits west of each
-station, off-screen at rest, so a station shows only its own biome while it is
-being read.
+Stations are separated by a 16vw gutter. A station's terrain bleeds east across
+its own gutter and the next station reaches back west across it and fades in, so
+a pan never shows the vertical step where one biome's crest tile was cut mid-tree
+and the next began mid-saddle. Because a station's window is bounded by its
+neighbours' slot edges, exactly one biome is drawn at rest and the blend is only
+ever visible while travelling. Geometry lives in `src/lib/station-geometry.ts`.
+
+**Swipe navigation.** On touch devices a horizontal drag travels between
+stations, dragging the landscape one-to-one with the finger and committing past
+22% of the viewport or on a fast flick. It is an enhancement, not a control: the
+nav sheet is the single-pointer alternative WCAG 2.5.1 asks for. The gesture
+claims nothing until horizontal movement beats vertical by 1.3x, ignores touches
+within 24px of either edge so the browser keeps its own back and forward swipes,
+declines to fire inside an open dialog, and never narrows `touch-action`, so pinch
+zoom is untouched. See `src/components/system/station-swipe.tsx`, which also owns
+the pan spring, because a tap and a swipe move the same strip and need one spring
+between them.
 
 ## Commands
 

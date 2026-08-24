@@ -36,6 +36,22 @@ export const ROLES: readonly Role[] = [
       'openapi',
     ],
     logo: { src: '/images/logos/zally.svg', alt: 'zally' },
+    /**
+     * The arc inside the one employer, oldest first. Three titles in three
+     * years, which is the fact the single "Engineering Team Lead" heading above
+     * hides: that heading is where this ended up, not where it started, and a
+     * reader who only sees it cannot tell the difference between being hired as
+     * a lead and being promoted into one.
+     */
+    progression: [
+      {
+        date: '2023-07',
+        title: 'Software Engineer',
+        note: 'Founding member of the development team.',
+      },
+      { date: '2024-08', title: 'Senior Software Engineer' },
+      { date: '2025-02', title: 'Engineering Team Lead' },
+    ],
   },
   {
     company: 'Department of Fisheries and Oceans',
