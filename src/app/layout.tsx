@@ -9,6 +9,7 @@ import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SkipLink } from '@/components/layout/SkipLink'
 import { ClientBoundary } from '@/components/system/error-boundary'
+import { StationSwipe, StationSwipeContent } from '@/components/system/station-swipe'
 import { ThemeProvider } from '@/components/system/theme-provider'
 import { SITE } from '@/content/site'
 import { SKILLS } from '@/content/skills'
@@ -91,30 +92,37 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SkipLink />
 
           {/*
+            StationSwipe owns the landscape's pan and the touch gesture that
+            drags it, so it has to sit ABOVE both the landscape and the page
+            content. It renders no markup of its own.
+          */}
+          <StationSwipe>
+            {/*
             The landscape sits HERE, in the layout, not in any page. That is
             what makes route changes read as travel: App Router preserves layout
             state across navigation, so the component never unmounts and the pan
             is continuous. If it throws, the boundary swaps in a still frame
             rather than letting one animation failure blank the page.
           */}
-          <ClientBoundary label="landscape" fallback={<LandscapeStatic />}>
-            <Landscape />
-          </ClientBoundary>
+            <ClientBoundary label="landscape" fallback={<LandscapeStatic />}>
+              <Landscape />
+            </ClientBoundary>
 
-          <SiteHeader />
+            <SiteHeader />
 
-          <main
-            id="content"
-            tabIndex={-1}
-            className="relative"
-            style={{ zIndex: Z.content }}
-          >
-            {children}
-          </main>
+            <main
+              id="content"
+              tabIndex={-1}
+              className="relative"
+              style={{ zIndex: Z.content }}
+            >
+              <StationSwipeContent>{children}</StationSwipeContent>
+            </main>
 
-          <div className="relative bg-background" style={{ zIndex: Z.content }}>
-            <SiteFooter />
-          </div>
+            <div className="relative bg-background" style={{ zIndex: Z.content }}>
+              <SiteFooter />
+            </div>
+          </StationSwipe>
 
           <Grain />
         </ThemeProvider>

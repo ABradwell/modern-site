@@ -40,6 +40,22 @@ export interface Skill {
   readonly opticalScale?: number
 }
 
+/**
+ * A step inside a single employer.
+ *
+ * Separate from Role because a promotion is not a new job: collapsing a
+ * progression into four sibling role cards would say a reader had four
+ * employers, and splitting one employer's dates across cards makes the tenure
+ * unreadable. So one card, with the arc inside it.
+ */
+export interface Milestone {
+  /** ISO YYYY-MM, the month the step started. */
+  readonly date: string
+  readonly title: string
+  /** One short line on what changed. Optional: not every step needs one. */
+  readonly note?: string
+}
+
 export interface Role {
   readonly company: string
   readonly title: string
@@ -52,6 +68,12 @@ export interface Role {
   readonly highlights: readonly string[]
   readonly stack: readonly string[]
   readonly logo?: { readonly src: string; readonly alt: string }
+  /**
+   * Ordered oldest to newest. Present only where the role actually changed
+   * shape over its tenure, so a two-month placement does not get a timeline
+   * with one node on it.
+   */
+  readonly progression?: readonly Milestone[]
 }
 
 /** Shorter-form roles that would crowd the main list. */

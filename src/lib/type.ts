@@ -34,3 +34,17 @@ export const META = 'text-sm leading-relaxed'
 
 /** Technology chips and the smallest supporting marks. Replaces the arbitrary values. */
 export const CHIP = 'font-mono text-xs'
+
+/**
+ * A technology tag.
+ *
+ * Set type alone was not enough: a bare mono word sitting under a bulleted list
+ * read as one more line of copy rather than as a tag, so the stack looked like a
+ * sentence that had lost its commas. This gives it an edge and a surface, which
+ * is the least that will make a reader parse it as a discrete object.
+ *
+ * Deliberately not the shadcn Badge. That component is rounded-full, and the
+ * shape lock in globals.css allows no pills anywhere on this site.
+ */
+export const TAG =
+  'inline-flex items-center rounded-sm border border-border bg-muted/50 px-2 py-1 font-mono text-xs leading-none'

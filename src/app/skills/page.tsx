@@ -12,40 +12,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { RoleProgression } from '@/components/sections/RoleProgression'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
 import { SKILLS, SKILL_BY_ID, WALL_GROUPS, skillsIn } from '@/content/skills'
-import { CHIP, META, PROSE, PROSE_TIGHT } from '@/lib/type'
+import { range } from '@/lib/dates'
+import { CHIP, META, PROSE, PROSE_TIGHT, TAG } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Experience',
   description:
     'Engineering roles from a semiconductor test lab and a computer vision placement through to leading a team on biometric authentication, and the technologies behind them.',
-}
-
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
-
-/** "Jan 2021", from an ISO YYYY-MM, without pulling in a date library. */
-function formatMonth(iso: string): string {
-  const [year, month] = iso.split('-')
-  return `${MONTHS[Number(month) - 1]} ${year}`
-}
-
-/** A plain hyphen between dates. Not an en dash, and certainly not an em dash. */
-function range(start: string, end: string | null): string {
-  return `${formatMonth(start)} - ${end ? formatMonth(end) : 'present'}`
 }
 
 /**
@@ -108,61 +84,112 @@ export default function ExperiencePage() {
             {ROLES.map((role) => (
               <AccordionItem key={role.company} value={role.company} className="border-0">
                 <AccordionTrigger className="py-7 hover:no-underline">
-                  <div className="grid flex-1 gap-1 pr-4 text-left md:grid-cols-[1fr_auto] md:items-baseline md:gap-6">
-                    <div>
-                      <span className="block text-base font-medium text-foreground md:text-lg">
-                        {role.title}
-                      </span>
-                      <span className={`mt-0.5 block ${META} text-muted-foreground`}>
-                        {role.company}
-                      </span>
-                    </div>
-                    <span
-                      className={`tabular ${CHIP} whitespace-nowrap text-muted-foreground`}
-                    >
-                      {range(role.start, role.end)}
-                    </span>
-                  </div>
-                </AccordionTrigger>
+                  {/*
+                    The logo sits in the trigger, so a collapsed row still says
+                    who the employer was. It used to live in the open panel only,
+                    which meant three of the four rows identified their employer
+                    in small grey type and nothing else. The mark is the fastest
+                    thing on the row to recognise, so it belongs where the row is
+                    scanned rather than where it is read.
 
-                <AccordionContent className="pb-9">
-                  <div className="grid gap-8 md:grid-cols-[1fr_12rem] md:gap-12">
-                    <div>
-                      <p className={`max-w-[62ch] ${PROSE} text-foreground/90`}>
-                        {role.summary}
-                      </p>
-                      <ul className="mt-5 max-w-[62ch] space-y-3">
-                        {role.highlights.map((highlight) => (
-                          <li
-                            key={highlight}
-                            className={`border-l border-border-strong pl-4 ${PROSE_TIGHT} text-muted-foreground`}
-                          >
-                            {highlight}
-                          </li>
-                        ))}
-                      </ul>
-                      <ul className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
-                        {role.stack.map((id) => (
-                          <li key={id} className={`${CHIP} text-muted-foreground`}>
-                            {SKILL_BY_ID.get(id as never)?.name ?? id}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
+                    A fixed 2.75rem box, object-left, whatever the mark's aspect
+                    ratio. Wordmark and square glyph then start at the same x and
+                    the titles line up down the list, which is the whole point of
+                    a rail.
+                  */}
+                  <div className="flex flex-1 items-start gap-5 pr-4 text-left">
+                    <span className="flex h-7 w-11 shrink-0 items-center md:mt-0.5">
                       {role.logo ? (
                         <Image
                           src={role.logo.src}
                           alt={`${role.logo.alt} logo`}
                           width={160}
                           height={80}
-                          className="h-10 w-auto max-w-[9rem] object-contain object-left opacity-80 dark:opacity-70"
+                          className="max-h-6 w-auto max-w-full object-contain object-left opacity-90 dark:opacity-80"
                         />
                       ) : null}
-                      <p className={`${META} text-muted-foreground`}>{role.location}</p>
+                    </span>
+
+                    <div className="grid flex-1 gap-1.5 md:grid-cols-[1fr_auto] md:items-baseline md:gap-6">
+                      <div>
+                        {/*
+                          Two full steps above the summary in the panel below,
+                          not the half step it was. Title and summary were both
+                          text-lg, one at font-medium, which is not enough
+                          difference to tell a reader which of the two is the
+                          heading.
+                        */}
+                        <span className="block text-lg font-semibold tracking-tight text-foreground md:text-xl">
+                          {role.title}
+                        </span>
+                        <span className={`mt-1 block ${META} text-muted-foreground`}>
+                          <span className="text-foreground/75">{role.company}</span>
+                          <span aria-hidden className="px-1.5 opacity-50">
+                            /
+                          </span>
+                          {role.location}
+                        </span>
+                      </div>
+                      <span
+                        className={`tabular ${CHIP} whitespace-nowrap text-muted-foreground`}
+                      >
+                        {range(role.start, role.end)}
+                      </span>
                     </div>
                   </div>
+                </AccordionTrigger>
+
+                {/*
+                  The panel indents to 4rem on md, which is exactly the logo box
+                  plus its gap, so the open content starts on the same x as the
+                  title above it rather than under the mark.
+                */}
+                <AccordionContent className="pb-10 md:pl-16">
+                  <p className={`max-w-[58ch] ${PROSE} text-foreground`}>
+                    {role.summary}
+                  </p>
+
+                  {role.progression ? (
+                    <RoleProgression
+                      items={role.progression}
+                      employer={role.company}
+                      className="mt-9"
+                    />
+                  ) : null}
+
+                  {/*
+                    A marked list, because an unmarked one is not read as a list.
+                    These were three blocks each carrying a left hairline, which
+                    is the pull-quote pattern: it said "three separate asides",
+                    not "three items of one set". A dot per item and a tighter
+                    gap between them says the opposite.
+                  */}
+                  <ul className="mt-9 max-w-[64ch] space-y-2.5">
+                    {role.highlights.map((highlight) => (
+                      <li
+                        key={highlight}
+                        className={`grid grid-cols-[0.5rem_1fr] gap-x-4 ${PROSE_TIGHT} text-muted-foreground`}
+                      >
+                        <span
+                          aria-hidden
+                          className="mt-[0.6em] size-1.5 rounded-full bg-foreground/40"
+                        />
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/*
+                    Ruled off, so the stack reads as the card's metadata rather
+                    than as a fourth highlight without a bullet.
+                  */}
+                  <ul className="mt-9 flex flex-wrap gap-1.5 border-t border-border pt-7">
+                    {role.stack.map((id) => (
+                      <li key={id} className={`${TAG} text-muted-foreground`}>
+                        {SKILL_BY_ID.get(id as never)?.name ?? id}
+                      </li>
+                    ))}
+                  </ul>
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -221,8 +248,7 @@ export default function ExperiencePage() {
             the same shape twice and tier two stays visibly tier two. */}
         <Section id="also" title="Also worked with">
           <p className={`mb-8 max-w-[60ch] ${PROSE_TIGHT} text-muted-foreground`}>
-            Less current, or used on a single project, but real. Kept separate rather than
-            padding the list above.
+            Some freebies and packages I&apos;ve had the chance to learn in passing
           </p>
           <ul className="flex max-w-[70ch] flex-wrap gap-x-6 gap-y-2">
             {tierTwo.map((skill) => (
