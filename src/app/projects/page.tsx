@@ -8,6 +8,7 @@ import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { PROJECTS } from '@/content/projects'
 import { SKILL_BY_ID } from '@/content/skills'
+import { CHIP, META, PROSE_TIGHT } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -83,12 +84,12 @@ export default function ProjectsPage() {
                       <h3 className="text-lg font-semibold tracking-tight md:text-xl">
                         {project.name}
                       </h3>
-                      <span className="tabular font-mono text-xs text-muted-foreground">
+                      <span className={`tabular ${CHIP} text-muted-foreground`}>
                         {project.year}
                       </span>
                     </div>
 
-                    <p className="mt-4 max-w-[62ch] text-sm leading-relaxed text-foreground/90">
+                    <p className={`mt-4 max-w-[62ch] ${PROSE_TIGHT} text-foreground/90`}>
                       {project.detail}
                     </p>
 
@@ -96,17 +97,16 @@ export default function ProjectsPage() {
                       // Attribution stays on the card, not in a footnote. The
                       // original tutorial credited no author, which is worth
                       // saying rather than quietly omitting.
-                      <p className="mt-4 max-w-[62ch] border-l border-border-strong pl-4 text-xs leading-relaxed text-muted-foreground">
+                      <p
+                        className={`mt-4 max-w-[62ch] border-l border-border-strong pl-4 ${META} text-muted-foreground`}
+                      >
                         {project.credit}
                       </p>
                     ) : null}
 
                     <ul className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
                       {project.stack.map((id) => (
-                        <li
-                          key={id}
-                          className="font-mono text-[0.6875rem] text-muted-foreground"
-                        >
+                        <li key={id} className={`${CHIP} text-muted-foreground`}>
                           {SKILL_BY_ID.get(id as never)?.name ?? id}
                         </li>
                       ))}

@@ -12,10 +12,20 @@ import { STATIONS } from '@/content/stations'
  */
 export const dynamic = 'force-static'
 
-/** Emits out/sitemap.xml at build. Derived from STATIONS so it cannot drift. */
+/**
+ * Emits out/sitemap.xml at build. Derived from STATIONS so it cannot drift.
+ *
+ * The trailing slash is not cosmetic. Under `trailingSlash: true` the export
+ * puts each station at out/skills/index.html, and DigitalOcean App Platform
+ * serves that at /skills/ only. Listing the bare /skills here would point every
+ * crawler at a URL the host 404s.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
   return STATIONS.map((station) => ({
-    url: new URL(station.href, SITE.url).toString(),
+    url: new URL(
+      station.href.endsWith('/') ? station.href : `${station.href}/`,
+      SITE.url,
+    ).toString(),
     changeFrequency: 'monthly',
     priority: station.href === '/' ? 1 : 0.7,
   }))

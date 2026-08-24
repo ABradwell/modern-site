@@ -23,11 +23,17 @@ export const REVEAL_VIEWPORT = { once: true, amount: 0.3 } as const
  * motion sickness. Depth belongs on the vertical axis, where the reader controls
  * the rate. Horizontally the landscape moves as one image.
  *
- * Damping ratio here is 26 / (2 * sqrt(80)) = 1.45, comfortably overdamped, so
+ * Damping ratio here is 26 / (2 * sqrt(72)) = 1.53, comfortably overdamped, so
  * the slide settles without overshoot. A viewport-wide slide that bounces at the
  * end is the other way to make this motion unpleasant.
+ *
+ * Stiffness came down from 80 when the biome gutters went in. A station is now
+ * 116 viewports of travel rather than 100, so at the old stiffness the same
+ * gesture covered 16 percent more ground in the same time. This holds the felt
+ * speed roughly where it was, which matters because per-depth pan speeds were
+ * already removed from this site for inducing motion sickness.
  */
-export const PAN_SPRING = { stiffness: 80, damping: 26, mass: 1 } as const
+export const PAN_SPRING = { stiffness: 72, damping: 26, mass: 1 } as const
 
 /**
  * Vertical parallax, as a multiple of scroll distance.

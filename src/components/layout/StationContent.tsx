@@ -37,8 +37,13 @@ export function StationContent({ children }: { children: ReactNode }) {
  * accessible name via aria-labelledby. There is no separate `-title` id any
  * more, because two ids for one heading is two things to keep in step.
  *
- * py-24 to py-40 is the low-density end of the scale, chosen because the pages
- * are short and the landscape needs room to be seen between them.
+ * py-12 at every breakpoint, flat rather than a ramp. It started at py-24 to
+ * py-40, which is the low-density end of the scale and was chosen when the site
+ * had five thin pages that needed padding out. Merging skills into experience
+ * gave that page real length, at which point the same padding read as gaps
+ * between unrelated blocks rather than as rhythm. A flat scale also means a
+ * section's spacing no longer changes as the viewport widens, which is what kept
+ * the anchor jumps landing in different places on different screens.
  *
  * There is deliberately no eyebrow slot. The budget for those small uppercase
  * wide-tracking labels is at most one per three sections, and this site ships

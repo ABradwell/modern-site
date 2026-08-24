@@ -120,7 +120,57 @@ export function Landscape() {
 // ---------------------------------------------------------------------------
 
 /**
- * Offset of the five-station strip, as a percentage of its own width.
+ * THE SEAM. Station geometry, in viewport widths.
+ *
+ * Stations used to butt-joint. Every biome's crest is a tile repeating at its own
+ * width, so at a boundary the tile was cut at an arbitrary phase: a conifer
+ * sliced down the middle at 60dvh sitting next to a mountain saddle at 75dvh.
+ * That step is a hard vertical line, invisible at rest because it sits exactly on
+ * the viewport edge, and unmissable the moment the strip slides.
+ *
+ * The fix is a GUTTER between stations, not a wider slot. Each station is one
+ * viewport of content followed by GUTTER_VW of transition, and a station's
+ * terrain bleeds east across its own gutter while the next station reaches back
+ * west across it and fades in. In the gutter the western biome is fully opaque
+ * and the eastern one ramps from 0 to 1 over the top of it, so total coverage is
+ * exactly 1 everywhere and, where the two biomes assign different colours to the
+ * same depth as the above-cloud station does, the colour interpolates instead of
+ * stepping.
+ *
+ * ONE-SIDED, not a cross-fade. Two ramps meeting in the middle would each be at
+ * 50 percent there, and two half-opaque layers of the same colour composite to 75
+ * percent rather than 100, which would leave a pale band down every join.
+ *
+ * THE GUTTER IS WHY THIS IS OFF-SCREEN AT REST. An earlier attempt widened each
+ * slot westward instead, with no gutter. That put a station's own fade off-screen
+ * to its west, but the NEXT station then began one viewport later, which is the
+ * current station's eastern edge, at full opacity: at rest on the plains there
+ * was a mountain peak sitting in the right-hand tenth of the window. With a
+ * gutter, a station's window is bounded by its neighbours' slot edges on both
+ * sides, so at rest exactly one biome is drawn and the blend is only ever visible
+ * while travelling.
+ *
+ * The cost is travel distance: the strip is now 116 viewports wide per station
+ * rather than 100, so the same spring covers 16 percent more ground in the same
+ * time. PAN_SPRING was slackened to hold the felt speed where it was.
+ */
+const GUTTER_VW = 16
+
+/** Distance travelled per station: one viewport of content plus its gutter. */
+const SPAN_VW = 100 + GUTTER_VW
+const STRIP_VW = STATIONS.length * SPAN_VW
+
+/** Viewport widths as a percentage of the whole strip. */
+const pct = (vw: number) => (vw / STRIP_VW) * 100
+
+/** A slot is its gutter, its viewport, and the next gutter it bleeds into. */
+const SLOT_VW = 100 + 2 * GUTTER_VW
+
+/** Ramp width as a percentage of one slot. */
+const SEAM_RAMP_PCT = (GUTTER_VW / SLOT_VW) * 100
+
+/**
+ * Offset of the station strip, as a percentage of its own width.
  *
  * One spring, shared by both bands, so nothing can drift out of alignment. The
  * config is deliberately overdamped: a damping ratio above 1 means the slide
@@ -128,7 +178,7 @@ export function Landscape() {
  * is the other way to make this motion unpleasant.
  */
 function usePan(index: number, still: boolean) {
-  const target = -index * 20
+  const target = -pct(index * SPAN_VW)
   const spring = useSpring(target, still ? { duration: 0 } : PAN_SPRING)
 
   useEffect(() => {
@@ -139,7 +189,20 @@ function usePan(index: number, still: boolean) {
   return useMotionTemplate`${spring}%`
 }
 
-/** The five stations side by side, panned as one. */
+/**
+ * Every station side by side, panned as one.
+ *
+ * Absolutely positioned rather than flexed, because the slots have to OVERLAP in
+ * the gutters and flex children cannot. Later stations paint over earlier ones in
+ * DOM order, which is the direction the fade needs.
+ *
+ * The fade is a mask on the slot, multiplying with the terrain masks inside it.
+ * repeat-y rather than no-repeat is load-bearing: the mask box is the slot, which
+ * is one viewport tall, while the near band's body runs to 130dvh. With no-repeat
+ * everything past the bottom of the slot falls outside the mask and is cut off.
+ * The gradient is uniform vertically, so tiling it costs nothing and covers every
+ * overhang.
+ */
 function PanStrip({
   pan,
   children,
@@ -147,10 +210,25 @@ function PanStrip({
   pan: MotionValue<string>
   children: (biome: (typeof STATIONS)[number]['biome']) => React.ReactNode
 }) {
+  const seam = `linear-gradient(to right, transparent 0%, #000 ${SEAM_RAMP_PCT.toFixed(3)}%)`
+
   return (
-    <motion.div className="absolute inset-y-0 left-0 flex w-[500%]" style={{ x: pan }}>
-      {STATIONS.map((station) => (
-        <div key={station.href} className="relative h-full w-[20%]">
+    <motion.div
+      className="absolute inset-y-0 left-0"
+      style={{ x: pan, width: `${STRIP_VW}%` }}
+    >
+      {STATIONS.map((station, i) => (
+        <div
+          key={station.href}
+          className="absolute inset-y-0"
+          style={{
+            left: `${pct(i * SPAN_VW - GUTTER_VW)}%`,
+            width: `${pct(SLOT_VW)}%`,
+            maskImage: seam,
+            maskSize: '100% 100%',
+            maskRepeat: 'repeat-y',
+          }}
+        >
           {children(station.biome)}
         </div>
       ))}

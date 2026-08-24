@@ -2,17 +2,24 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
-import { AllProjectsLink, FeaturedWork } from '@/components/sections/FeaturedWork'
+import { FeaturedWork } from '@/components/sections/FeaturedWork'
 import { ContactRoutes } from '@/components/sections/ContactRoutes'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { ABOUT, HERO_SUBTEXT, SITE } from '@/content/site'
+import { PROSE } from '@/lib/type'
 
 /**
- * The landing page. Four layout families, none repeated: the layered hero, an
- * asymmetric project split, a single-column read, and a minimal close.
+ * The landing page. Three layout families below the hero, none repeated: a
+ * single-column read against a portrait, a two-column close, and an asymmetric
+ * project grid.
+ *
+ * Section order is About, then Get in touch, then Selected work. Contact sitting
+ * above the work rather than closing the page is deliberate on the owner's part:
+ * the page's job is to get someone to make contact, and the projects are
+ * supporting evidence a reader can go on to browse.
  */
 export default function HomePage() {
   return (
@@ -66,16 +73,17 @@ export default function HomePage() {
             <div className="max-w-[65ch]">
               {ABOUT.map((paragraph, i) => (
                 <Reveal key={i} index={i}>
-                  <p className="mb-6 text-lg leading-relaxed text-foreground/90">
-                    {paragraph}
-                  </p>
+                  <p className={`mb-6 ${PROSE} text-foreground/90`}>{paragraph}</p>
                 </Reveal>
               ))}
               <Reveal index={ABOUT.length}>
+                {/* inline-flex, not an inline `display: flex` override. A flex
+                    box stretches to the width of its container, which made this
+                    a full-measure bar rather than a button, and the inline style
+                    also dropped the alignment and gap the arrow needs. */}
                 <Link
                   href="/skills"
-                  className="rounded-ctl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
-                  style={{ "display": "flex", }}
+                  className="inline-flex items-center gap-1.5 rounded-ctl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none"
                 >
                   Full experience
                   <ArrowUpRight className="size-3.5" weight="regular" aria-hidden />
@@ -101,7 +109,7 @@ export default function HomePage() {
             of routes, nothing else. */}
         <Section id="contact" title={SITE.contactLabel}>
           <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
-            <p className="max-w-[46ch] text-lg leading-relaxed text-foreground/90 md:text-xl">
+            <p className={`max-w-[46ch] ${PROSE} text-foreground/90`}>
               Whether you&apos;re looking to work together, start something new, or extend
               your network, please do not hesitate to reach out!
             </p>
@@ -110,10 +118,9 @@ export default function HomePage() {
         </Section>
 
         <Section id="work" title="Selected work">
+          {/* The all-projects card lives inside the grid now, under the lead
+              project, so there is no trailing link to append here. */}
           <FeaturedWork />
-          <div className="mt-10">
-            <AllProjectsLink />
-          </div>
         </Section>
       </StationContent>
     </>

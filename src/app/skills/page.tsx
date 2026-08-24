@@ -1,25 +1,25 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 
 import { BrandMark } from '@/components/brand/BrandMark'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
-import { SKILLS, WALL_GROUPS, SKILL_BY_ID, skillsIn } from '@/content/skills'
-import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
-import Image from 'next/image'
-
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
+import { SKILLS, SKILL_BY_ID, WALL_GROUPS, skillsIn } from '@/content/skills'
+import { CHIP, META, PROSE, PROSE_TIGHT } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Experience',
   description:
-    'Engineering roles from a semiconductor test lab and a computer vision placement through to leading a team on biometric authentication. Languages, AWS services, frameworks and infrastructure worked with in production and in research.',
+    'Engineering roles from a semiconductor test lab and a computer vision placement through to leading a team on biometric authentication, and the technologies behind them.',
 }
 
 const MONTHS = [
@@ -42,28 +42,39 @@ function formatMonth(iso: string): string {
   const [year, month] = iso.split('-')
   return `${MONTHS[Number(month) - 1]} ${year}`
 }
+
 /** A plain hyphen between dates. Not an en dash, and certainly not an em dash. */
 function range(start: string, end: string | null): string {
   return `${formatMonth(start)} - ${end ? formatMonth(end) : 'present'}`
 }
 
 /**
- * The technology wall.
+ * Experience: roles, competencies, education.
  *
- * Category rows of differing length, not a grid of equal cards. Three reasons.
- * A three-column equal-card feature row is the most generic layout there is.
- * Rows let each category be honestly as long or short as it actually is. And a
- * horizontal band sits with the plains horizon behind it rather than fighting it.
+ * ONE PAGE, not two. Skills and experience were separate routes, which meant a
+ * reader had to hold the roles in their head while looking at a wall of
+ * technologies on a different page to see how the two related. Merging them
+ * removed a station from the journey and gave this page enough length to justify
+ * the reading order below. `/experience` is gone; this route still answers to
+ * /skills and is labelled Experience everywhere a reader sees it.
  *
- * Two registers interleave down the page: brand marks where a lawful one exists
- * and set type where it does not. That is a licensing constraint turned into the
- * thing that stops the wall being fifty identical cells. See BrandMark.
+ * READING ORDER. Roles first, because the roles are the evidence and the
+ * technologies are what the evidence was built with. Competencies second, so a
+ * reader who has just read what was built can see the toolset behind it.
+ * Education last: it is the least current thing on the page, and putting it
+ * above the competencies pushed the toolset below the fold for no gain.
  *
- * Headed "Technologies", never "Trusted by" or "Partners". These are tools this
- * person has used, not customers, so the accurate heading is also the one that
- * implies no endorsement by any trademark holder.
+ * The technology wall is category rows of differing length rather than a grid of
+ * equal cards. A three-column equal-card feature row is the most generic layout
+ * there is, rows let each category be honestly as long or short as it actually
+ * is, and a horizontal band sits with the plains horizon behind it rather than
+ * fighting it.
+ *
+ * Headed "Core competencies", never "Trusted by" or "Partners". These are tools
+ * this person has used, not customers, so the accurate heading is also the one
+ * that implies no endorsement by any trademark holder.
  */
-export default function SkillsPage() {
+export default function ExperiencePage() {
   const tierTwo = SKILLS.filter((s) => s.tier === 2)
 
   return (
@@ -74,14 +85,14 @@ export default function SkillsPage() {
           className="text-4xl font-semibold tracking-tighter text-foreground md:text-5xl"
           style={{ lineHeight: 1.08 }}
         >
-          Technologies
+          Experience
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          What I reach for, grouped by where it sits in the stack. Everything here has
-          been used in anger, not just read about.
+          Where I have worked, what I built there, and the tools it was built with.
+          Everything here has been used in anger, not just read about.
         </p>
 
-        <ScrollCue href="#wall" />
+        <ScrollCue href="#roles" />
       </StationHero>
 
       <StationContent>
@@ -102,11 +113,13 @@ export default function SkillsPage() {
                       <span className="block text-base font-medium text-foreground md:text-lg">
                         {role.title}
                       </span>
-                      <span className="mt-0.5 block text-sm text-muted-foreground">
+                      <span className={`mt-0.5 block ${META} text-muted-foreground`}>
                         {role.company}
                       </span>
                     </div>
-                    <span className="tabular font-mono text-xs whitespace-nowrap text-muted-foreground">
+                    <span
+                      className={`tabular ${CHIP} whitespace-nowrap text-muted-foreground`}
+                    >
                       {range(role.start, role.end)}
                     </span>
                   </div>
@@ -115,14 +128,14 @@ export default function SkillsPage() {
                 <AccordionContent className="pb-9">
                   <div className="grid gap-8 md:grid-cols-[1fr_12rem] md:gap-12">
                     <div>
-                      <p className="max-w-[62ch] text-sm leading-relaxed text-foreground/90">
+                      <p className={`max-w-[62ch] ${PROSE} text-foreground/90`}>
                         {role.summary}
                       </p>
                       <ul className="mt-5 max-w-[62ch] space-y-3">
                         {role.highlights.map((highlight) => (
                           <li
                             key={highlight}
-                            className="border-l border-border-strong pl-4 text-sm leading-relaxed text-muted-foreground"
+                            className={`border-l border-border-strong pl-4 ${PROSE_TIGHT} text-muted-foreground`}
                           >
                             {highlight}
                           </li>
@@ -130,10 +143,7 @@ export default function SkillsPage() {
                       </ul>
                       <ul className="mt-6 flex flex-wrap gap-x-3 gap-y-1">
                         {role.stack.map((id) => (
-                          <li
-                            key={id}
-                            className="font-mono text-[0.6875rem] text-muted-foreground"
-                          >
+                          <li key={id} className={`${CHIP} text-muted-foreground`}>
                             {SKILL_BY_ID.get(id as never)?.name ?? id}
                           </li>
                         ))}
@@ -150,73 +160,39 @@ export default function SkillsPage() {
                           className="h-10 w-auto max-w-[9rem] object-contain object-left opacity-80 dark:opacity-70"
                         />
                       ) : null}
-                      <p className="text-xs text-muted-foreground">{role.location}</p>
+                      <p className={`${META} text-muted-foreground`}>{role.location}</p>
                     </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </Section>
 
-        <Section id="education" title="Education">
-          <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
-            <div>
-              {EDUCATION.map((entry) => (
-                <Reveal key={entry.institution}>
-                  <p className="text-base font-medium text-foreground">
-                    {entry.qualification}
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {entry.institution}, {entry.location}
-                  </p>
-                  <p className="tabular mt-1 font-mono text-xs text-muted-foreground">
-                    {range(entry.start, entry.end)}
-                  </p>
-                  <ul className="mt-5 space-y-2">
-                    {entry.honours.map((honour) => (
-                      <li key={honour} className="text-sm text-foreground/90">
-                        {honour}
-                      </li>
-                    ))}
-                  </ul>
-                </Reveal>
+          {/*
+            Previous employment sits with the employment, which is where it
+            always belonged. It spent a while filed under Education behind a
+            label reading "Also", which described its position on the page rather
+            than what it was. These are real jobs, just short ones, and giving
+            each a full accordion card would flatten the difference between them
+            and the four above.
+          */}
+          <Reveal className="mt-14 block">
+            <h3 className="text-base font-medium text-foreground">Previous employment</h3>
+            <ul className="mt-4 max-w-[62ch] space-y-3">
+              {MINOR_ROLES.map((role) => (
+                <li key={role.company} className={`${META} text-muted-foreground`}>
+                  <span className="text-foreground/90">{role.title}</span>
+                  {', '}
+                  {role.company}
+                  {'. '}
+                  <span className={`tabular ${CHIP}`}>{range(role.start, role.end)}</span>
+                </li>
               ))}
-            </div>
-
-            <Reveal>
-              <dl className="space-y-6">
-                <div>
-                  <dt className="text-sm font-medium text-foreground">Eligibility</dt>
-                  <dd className="mt-2 space-y-1">
-                    {CREDENTIALS.map((item) => (
-                      <p key={item} className="text-sm text-muted-foreground">
-                        {item}
-                      </p>
-                    ))}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-foreground">Also</dt>
-                  <dd className="mt-2 space-y-3">
-                    {MINOR_ROLES.map((role) => (
-                      <p key={role.company} className="text-sm text-muted-foreground">
-                        <span className="text-foreground/90">{role.title}</span>
-                        {', '}
-                        {role.company}
-                        {'. '}
-                        <span className="tabular font-mono text-xs">
-                          {range(role.start, role.end)}
-                        </span>
-                      </p>
-                    ))}
-                  </dd>
-                </div>
-              </dl>
-            </Reveal>
-          </div>
+            </ul>
+          </Reveal>
         </Section>
-        <Section id="wall" title="By layer">
+
+        <Section id="competencies" title="Core competencies">
           <div className="divide-y divide-border">
             {WALL_GROUPS.map((group, gi) => {
               const items = skillsIn(group.key, 1)
@@ -224,10 +200,10 @@ export default function SkillsPage() {
               return (
                 <Reveal key={group.key} index={gi} className="block">
                   <div className="grid gap-4 py-8 md:grid-cols-[10rem_1fr] md:gap-8 md:py-10">
-                    <h3 className="pt-2 text-sm font-medium text-foreground">
+                    <h3 className="pt-2 text-base font-medium text-foreground">
                       {group.label}
                     </h3>
-                    <ul className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                    <ul className="flex flex-wrap items-center gap-2">
                       {items.map((skill) => (
                         <li key={skill.id}>
                           <BrandMark skill={skill} />
@@ -241,10 +217,10 @@ export default function SkillsPage() {
           </div>
         </Section>
 
-        {/* A measured list rather than more rows, so the page does not present
-            the same shape twice. */}
+        {/* A measured list rather than more pills, so the page does not present
+            the same shape twice and tier two stays visibly tier two. */}
         <Section id="also" title="Also worked with">
-          <p className="mb-8 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">
+          <p className={`mb-8 max-w-[60ch] ${PROSE_TIGHT} text-muted-foreground`}>
             Less current, or used on a single project, but real. Kept separate rather than
             padding the list above.
           </p>
@@ -255,6 +231,46 @@ export default function SkillsPage() {
               </li>
             ))}
           </ul>
+        </Section>
+
+        <Section id="education" title="Education">
+          <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
+            <div>
+              {EDUCATION.map((entry) => (
+                <Reveal key={entry.institution}>
+                  <p className="text-base font-medium text-foreground">
+                    {entry.qualification}
+                  </p>
+                  <p className={`mt-1 ${META} text-muted-foreground`}>
+                    {entry.institution}, {entry.location}
+                  </p>
+                  <p className={`tabular mt-1 ${CHIP} text-muted-foreground`}>
+                    {range(entry.start, entry.end)}
+                  </p>
+                  <ul className="mt-5 space-y-2">
+                    {entry.honours.map((honour) => (
+                      <li key={honour} className={`${PROSE_TIGHT} text-foreground/90`}>
+                        {honour}
+                      </li>
+                    ))}
+                  </ul>
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal>
+              <dl>
+                <dt className="text-base font-medium text-foreground">Eligibility</dt>
+                <dd className="mt-3 space-y-1">
+                  {CREDENTIALS.map((item) => (
+                    <p key={item} className={`${META} text-muted-foreground`}>
+                      {item}
+                    </p>
+                  ))}
+                </dd>
+              </dl>
+            </Reveal>
+          </div>
         </Section>
       </StationContent>
     </>
