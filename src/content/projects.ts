@@ -14,7 +14,7 @@ export const PROJECTS: readonly Project[] = [
     summary:
       'A player for ten original tracks, built around a gramophone transport and shareable links.',
     detail:
-      'The most recent thing I have built, and the one the old site never linked. React and TypeScript on Vite, with a shared player context so playback survives navigation, a QR modal for handing a track to someone in the room, and a snippet view for the parts worth hearing first.',
+      'A personal favourite of mine, a Vite & React web app which includes a cute record player, and streams a recently recorded album.',
     stack: ['typescript', 'react', 'vite'],
     repo: 'https://github.com/ABradwell/bradwell-music-website',
     image: {
@@ -71,7 +71,7 @@ export const PROJECTS: readonly Project[] = [
     stack: ['python', 'opencv', 'mediapipe', 'computer-vision'],
     repo: 'https://github.com/ABradwell/Hand_Tracking',
     credit:
-      'The pretrained hand-recognition network comes from a TechVidvan tutorial, by way of Google MediaPipe. No author was credited on the original.',
+      'The pretrained hand-recognition network comes from a TechVidvan tutorial, by way of Google MediaPipe.',
     image: {
       src: '/images/projects/hand-tracker.jpg',
       alt: 'A tracked hand with detected joint positions overlaid',
