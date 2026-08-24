@@ -61,7 +61,9 @@ ingress:
 # taken the site offline. Declaring both here is what stops that.
 #
 # `www` is an ALIAS of the PRIMARY, so App Platform issues a certificate for it
-# and redirects it to the apex. Without the entry the shared edge has no
+# and serves the site on it. An ALIAS does not redirect: it answers 200 with the
+# same content, and the canonical tag is what points crawlers at the apex.
+# Without the entry the shared edge has no
 # certificate for that hostname and the browser fails the handshake with
 # ERR_SSL_VERSION_OR_CIPHER_MISMATCH, which reads as "the site is down" even
 # though the apex is serving fine.
