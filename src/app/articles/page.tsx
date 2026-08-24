@@ -4,14 +4,21 @@ import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
+import { JsonLd } from '@/components/system/json-ld'
 import { Reveal } from '@/components/system/reveal'
 import { ARTICLES, ARTICLES_NOTE } from '@/content/articles'
+import { SITE } from '@/content/site'
+import { writingGraph } from '@/lib/schema'
 import { CHIP, PROSE, PROSE_TIGHT } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Writing',
   description:
     'Two opinion pieces on the state of the software job market and on the reflex to reach for object orientation.',
+  // See the note in skills/page.tsx. Inherited canonicals pointed every station
+  // at the homepage.
+  alternates: { canonical: '/articles/' },
+  openGraph: { url: new URL('/articles/', SITE.url).toString() },
 }
 
 /**
@@ -28,6 +35,8 @@ export const metadata: Metadata = {
 export default function ArticlesPage() {
   return (
     <>
+      <JsonLd data={writingGraph} />
+
       <StationHero>
         <h1
           id="station-title"

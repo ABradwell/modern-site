@@ -5,6 +5,7 @@ import { BrandMark } from '@/components/brand/BrandMark'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
+import { JsonLd } from '@/components/system/json-ld'
 import { Reveal } from '@/components/system/reveal'
 import {
   Accordion,
@@ -14,14 +15,21 @@ import {
 } from '@/components/ui/accordion'
 import { RoleProgression } from '@/components/sections/RoleProgression'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
+import { SITE } from '@/content/site'
 import { SKILLS, SKILL_BY_ID, WALL_GROUPS, skillsIn } from '@/content/skills'
 import { range } from '@/lib/dates'
+import { experienceGraph } from '@/lib/schema'
 import { CHIP, META, PROSE, PROSE_TIGHT, TAG } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Experience',
   description:
     'Engineering roles from a semiconductor test lab and a computer vision placement through to leading a team on biometric authentication, and the technologies behind them.',
+  // Its own canonical and og:url. Inherited from the layout, both pointed here
+  // at the homepage, which told crawlers this page was a duplicate of it. The
+  // trailing slash matches sitemap.xml and the path the host actually serves.
+  alternates: { canonical: '/skills/' },
+  openGraph: { url: new URL('/skills/', SITE.url).toString() },
 }
 
 /**
@@ -55,6 +63,8 @@ export default function ExperiencePage() {
 
   return (
     <>
+      <JsonLd data={experienceGraph} />
+
       <StationHero>
         <h1
           id="station-title"

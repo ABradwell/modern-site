@@ -21,11 +21,22 @@ export const dynamic = 'force-static'
  * crawler at a URL the host 404s.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  /**
+   * Build time, not authoring time. `lastmod` is the one hint in this file
+   * search engines actually act on, and `changefreq` and `priority` are
+   * documented as ignored by Google. A per-page date would be better still, but
+   * the content has no per-page timestamp to read and inventing one would be
+   * asserting a freshness the page cannot back up. The build date is true: this
+   * export is when these documents were last produced.
+   */
+  const lastModified = new Date()
+
   return STATIONS.map((station) => ({
     url: new URL(
       station.href.endsWith('/') ? station.href : `${station.href}/`,
       SITE.url,
     ).toString(),
+    lastModified,
     changeFrequency: 'monthly',
     priority: station.href === '/' ? 1 : 0.7,
   }))

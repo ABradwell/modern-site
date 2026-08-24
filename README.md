@@ -62,7 +62,8 @@ Vite SPA returns HTTP 200 for a missing route, which is wrong for both readers a
 crawlers.
 
 Known trade-offs, since they are permanent under static export: no `headers` from
-`next.config` (so security headers live in `public/_headers` and `vercel.json`),
+`next.config` (so security headers live in `public/_headers`, `vercel.json` and,
+for the hosts that can set no headers at all, a meta CSP from `src/lib/csp.ts`),
 no Server Actions (so no contact form; the site links a mailto instead), and no
 image optimisation, so `images.unoptimized` is on and every asset is shipped at
 the size it was authored.
@@ -236,12 +237,36 @@ A catchall would serve the homepage with a 200 for every mistyped URL, so broken
 links would look healthy to a visitor and to a crawler.
 
 **Static sites cannot set response headers.** There is no App Platform
-equivalent of `vercel.json` or `public/_headers`, so the CSP and the immutable
-cache header on `/_next/static/*` do not apply on DigitalOcean. Both files stay
-in the repo for the hosts that do honour them. Getting headers on DigitalOcean
-means moving off the static-site component onto a service, which is a real
-server and a real bill; it is not worth it for a static portfolio, but it is the
-only route if the CSP becomes a requirement.
+equivalent of `vercel.json` or `public/_headers`, so nothing in either file
+applies on DigitalOcean. Both stay in the repo for the hosts that do honour them.
+
+What survives that, and what does not, is worth being precise about, because
+this is the host the site actually deploys to:
+
+- **The CSP does apply.** It is also emitted as a `<meta http-equiv>` tag in
+  every document, from `src/lib/csp.ts`, and a meta CSP is enforced by the
+  browser from the markup with no host involvement. That is the same policy the
+  headers carry, minus the directives meta cannot express.
+- **`frame-ancestors` and `X-Frame-Options` do not.** Both are header-only, and
+  `frame-ancestors` is ignored in meta by specification. On DigitalOcean the site
+  is therefore embeddable in an iframe by anyone. It carries no session, no
+  cookie and no authenticated action, so the practical exposure is someone
+  framing a portfolio, but the gap is real.
+- **HSTS, `Referrer-Policy`, `X-Content-Type-Options`, `Permissions-Policy` and
+  `Cross-Origin-Opener-Policy` do not apply either.** All header-only.
+- **The immutable cache header on `/_next/static/*` does not apply**, so those
+  assets are revalidated more often than they need to be. A correctness
+  non-issue and a small performance one.
+
+`scripts/verify-export.mjs` compares all three copies of the CSP on every build
+and fails if they have drifted, so the meta tag cannot quietly fall behind the
+headers.
+
+Closing the remaining gap does not require moving off the static-site component.
+Putting Cloudflare in front of the app with proxied DNS and adding a Transform
+Rule for response headers restores the full set on the free tier, and is the
+cheapest option by a wide margin. Moving to a service component instead means a
+real server and a real bill for a site that has no server-side work to do.
 
 The Node version comes from `engines.node` in `package.json`. It is a `>=` range
 rather than a pin, so App Platform resolves it to the newest Node it offers. Pin
@@ -260,6 +285,43 @@ logos removed from Simple Icons on trademark request. Rather than drawing one,
 the technology wall runs two registers, a brand mark where one legitimately
 exists and set type where it does not. The wall is headed "Technologies" and
 never "Trusted by": these are tools, not customers.
+
+## What machines read
+
+Four surfaces, all generated from `src/content/` so none of them can drift from
+what the pages say.
+
+**Canonicals live per page, never in the root layout.** Metadata merges down the
+route tree, so a canonical declared once in `layout.tsx` is inherited verbatim by
+every route that does not override it. That is how this site spent a while
+telling crawlers that `/skills/`, `/projects/` and `/articles/` were all
+duplicates of the homepage while `sitemap.xml` went on submitting them as
+distinct URLs. `openGraph.url` has the same trap and the same fix. If you add a
+route, give it its own `alternates.canonical`.
+
+**JSON-LD, as one graph.** `src/lib/schema.ts`. The Person and WebSite are
+declared once in the layout with stable `@id`s, and each route adds a page node
+that references the Person by id rather than restating it: `ProfilePage` on the
+home and experience pages, `CollectionPage` with an `ItemList` of
+`SoftwareSourceCode` on projects, the same with `Article` items on writing.
+`knowsAbout` is the tier-1 competency wall and `alumniOf` is the education entry,
+so both maintain themselves.
+
+**`/llms.txt`.** `src/app/llms.txt/route.ts`. The whole site as one plain-text
+document in reading order. The HTML is a poor artefact to hand a model: the
+prose is interleaved with fifty-odd inline RSC flight payloads and kilobytes of
+SVG terrain mask, so everything is present and almost none of it is easy to
+find. This is the same content with the presentation removed. It is a route
+handler rather than a file in `public/` so that it reads the typed content
+modules directly; the extension in the segment name is what makes Next write
+`out/llms.txt` instead of a directory index, and the build gate asserts it.
+
+**`robots.txt`.** `src/app/robots.ts`. Everything is allowed, including the AI
+crawlers, which are listed by name even though `*` already covers them. A named
+group is the seam where the answer can differ per agent later, and the reasoning
+for allowing them is written down next to the list. This is a portfolio whose job
+is to be found and summarised; blocking the ingest would be blocking the
+readership.
 
 ## A note on the pre-commit hook
 
