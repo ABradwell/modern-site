@@ -53,14 +53,28 @@ ingress:
         path:
           prefix: /
 
-# Custom domain. Commented out because adding it here starts certificate
-# issuance and expects DNS to be pointing at the app already. Uncomment once
-# the domain's nameservers or its ALIAS/CNAME record resolve to DigitalOcean.
+# Custom domains.
 #
-# domains:
-#   - domain: aidenbradwell.com
-#     type: PRIMARY
-#     zone: aidenbradwell.com
-#   - domain: www.aidenbradwell.com
-#     type: ALIAS
-#     zone: aidenbradwell.com
+# These are live. The apex was originally attached through the dashboard while
+# this block was still commented out, which made the spec disagree with the
+# running app: the next `doctl apps update` would have dropped the domain and
+# taken the site offline. Declaring both here is what stops that.
+#
+# `www` is an ALIAS of the PRIMARY, so App Platform issues a certificate for it
+# and redirects it to the apex. Without the entry the shared edge has no
+# certificate for that hostname and the browser fails the handshake with
+# ERR_SSL_VERSION_OR_CIPHER_MISMATCH, which reads as "the site is down" even
+# though the apex is serving fine.
+#
+# `zone` tells App Platform the DNS is a DigitalOcean managed zone, so it keeps
+# the records itself. Any hand-written A record for these names is drift and
+# must be removed: pinning a name to one edge IP does not register it with the
+# app, so it never gets a certificate. See the README for the DNS steps.
+
+domains:
+  - domain: aidenbradwell.com
+    type: PRIMARY
+    zone: aidenbradwell.com
+  - domain: www.aidenbradwell.com
+    type: ALIAS
+    zone: aidenbradwell.com
