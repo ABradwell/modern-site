@@ -47,5 +47,6 @@ next-env.d.ts
 # terrain contact sheets from `pnpm terrain -- --preview`
 .terrain-preview
 
-.claude/worktrees
+# agent git worktrees, full nested checkouts of this repo
+# (also ignored by eslint and prettier)
 .claude/worktrees/

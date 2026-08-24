@@ -36,6 +36,10 @@ export default defineConfig([
   globalIgnores([
     '.next/**',
     'out/**',
+    // Nested git worktrees are full checkouts of this repo. Without this,
+    // `eslint .` lints every worktree's source AND its generated .next output
+    // (the patterns above are root-anchored, so they do not cover them).
+    '.claude/worktrees/**',
     'next-env.d.ts',
     'src/content/terrain.generated.ts',
   ]),
