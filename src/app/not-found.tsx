@@ -38,7 +38,8 @@ export default function NotFound() {
             Off the trail
           </h1>
           <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-            There is nothing at this address. The five places that do exist are below.
+            There is nothing at this address. The {STATIONS.length} places that do exist
+            are below.
           </p>
 
           <ul className="mt-10 flex flex-wrap gap-3">
