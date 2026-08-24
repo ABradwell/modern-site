@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
 import { Section, StationContent } from '@/components/layout/StationContent'
+import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { PROJECTS } from '@/content/projects'
@@ -40,6 +41,8 @@ export default function ProjectsPage() {
           Five things worth showing. Most are older than the work I do now, and they are
           dated accordingly.
         </p>
+
+        <ScrollCue href="#projects" />
       </StationHero>
 
       <StationContent>

@@ -102,6 +102,13 @@ export interface Article {
   readonly year: number
 }
 
+export interface PhoneNumber {
+  /** E.164. Used for the `tel:` href, so no spaces or punctuation. */
+  readonly e164: string
+  /** Spaced for reading. */
+  readonly display: string
+}
+
 export interface SiteConfig {
   readonly name: string
   readonly shortName: string
@@ -111,6 +118,12 @@ export interface SiteConfig {
   readonly url: string
   readonly description: string
   readonly email: string
+  /**
+   * null means the contact section offers no phone route, and the page is
+   * correct without one. It is NOT a placeholder: a plausible-looking number
+   * invented to fill the slot is somebody else's real phone.
+   */
+  readonly phone: PhoneNumber | null
   readonly github: string
   readonly linkedin: string
   /** One contact label, used in the nav, the hero and the footer alike. */

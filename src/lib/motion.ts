@@ -46,8 +46,13 @@ export const PAN_SPRING = { stiffness: 80, damping: 26, mass: 1 } as const
  * with the top of the content block closes as the reader scrolls, instead of
  * travelling along with the page and sitting on it permanently.
  *
+ * water sits BETWEEN terrain2 and content, not behind terrain2, because the
+ * river lies in the ground plane in front of row 2. It was 0.82 while the river
+ * was painted behind that row; at that speed it drifted out from under the near
+ * grass as the reader scrolled and eventually floated clear of the bank.
+ *
  *   sky 0.40  <  haze 0.52  <  terrain4 0.66  <  terrain3 0.76
- *             <  water 0.82  <  terrain2 0.92  <  CONTENT 1.00  <  terrain1 1.08
+ *             <  terrain2 0.92  <  water 0.96  <  CONTENT 1.00  <  terrain1 1.08
  */
 export const SPEED = {
   sky: 0.4,
@@ -55,8 +60,8 @@ export const SPEED = {
   haze: 0.52,
   terrain4: 0.66,
   terrain3: 0.76,
-  water: 0.82,
   terrain2: 0.92,
+  water: 0.96,
   terrain1: 1.08,
 } as const
 

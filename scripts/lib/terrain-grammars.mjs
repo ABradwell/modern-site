@@ -61,52 +61,73 @@ export function conifers(w, h, seed, { count, boughs, snags = 0, minH = 0.45 }) 
   const cmds = [`M${pt(0, base)}L${pt(w, base)}L${pt(w, h)}L${pt(0, h)}Z`]
 
   for (let i = 0; i < count; i += 1) {
+    // Every random draw happens here, before any branch, so the sequence does
+    // not depend on which trees turned out to be snags.
     const cx = span * (i + 0.5) + (rand() - 0.5) * span * 0.24
     const height = (base - h * 0.03) * (minH + rand() * (1 - minH))
-    const apexY = base - height
     const hw = span * (0.34 + rand() * 0.18)
-
-    // A dead snag: bare trunk, broken flat top. One per near layer at most,
-    // and its job is to interrupt the rhythm of the spires around it.
-    if (snagAt.has(i)) {
-      const tw = hw * 0.16
-      cmds.push(
-        `M${pt(cx - tw, base)}L${pt(cx - tw, apexY + height * 0.06)}L${pt(cx + tw, apexY + height * 0.1)}L${pt(cx + tw, base)}Z`,
-      )
-      continue
-    }
-
-    const tree = [`M${pt(cx - hw, base)}`]
-
-    // Left flank, climbing. The outer point is a bough tip, the inner point the
-    // shoulder where that bough meets the trunk. Boughs overhang, so this is
-    // deliberately not monotonic in x. What keeps it a simple polygon is that y
-    // decreases strictly at every step.
-    for (let b = 0; b < boughs; b += 1) {
-      const t = b / boughs
-      const taper = (1 - t) ** 1.18
-      const droop = 0.045 * (1 - t)
-      tree.push(`L${pt(cx - hw * taper, base - height * (t + droop))}`)
-      tree.push(`L${pt(cx - hw * taper * 0.66, base - height * (t + 0.62 / boughs))}`)
-    }
-    tree.push(`L${pt(cx, apexY)}`)
-
-    // Right flank, descending, with a different taper exponent and notch depth
-    // so no tree is symmetric. That asymmetry is what stops the row reading as
-    // one stamp repeated.
     const rTaper = 1.06 + rand() * 0.2
     const rNotch = 0.46 + rand() * 0.14
-    for (let b = boughs - 1; b >= 0; b -= 1) {
-      const t = b / boughs
-      const taper = (1 - t) ** rTaper
-      tree.push(`L${pt(cx + hw * taper * rNotch, base - height * (t + 0.62 / boughs))}`)
-      tree.push(`L${pt(cx + hw * taper, base - height * (t + 0.04 * (1 - t)))}`)
-    }
-    tree.push(`L${pt(cx + hw, base)}`, 'Z')
-    cmds.push(tree.join(''))
+
+    const at = snagAt.has(i)
+      ? (x) => snag(x, base, height, hw)
+      : (x) => spire(x, base, height, hw, boughs, rTaper, rNotch)
+
+    cmds.push(at(cx))
+
+    // A crown that crosses a tile edge is drawn a SECOND time one tile over, so
+    // the two halves meet across the repeat. Without this the crown is simply
+    // clipped at the edge and the seam shows up as a vertical cut straight down
+    // the treeline, which is the one repeat artefact the eye finds immediately.
+    // Same device as the cloudbank's edge hummock, for the same reason.
+    if (cx - hw < 0) cmds.push(at(cx + w))
+    if (cx + hw > w) cmds.push(at(cx - w))
   }
 
   return cmds.join('')
+}
+
+/**
+ * One conifer, as a closed subpath centred on `cx`.
+ *
+ * The left flank climbs and the right flank descends with a different taper
+ * exponent and notch depth, so no tree is symmetric. That asymmetry is what
+ * stops a row reading as one stamp repeated. Boughs overhang, so the outline is
+ * deliberately NOT monotonic in x; what keeps it a simple polygon is that y
+ * moves strictly one way at every step.
+ */
+function spire(cx, base, height, hw, boughs, rTaper, rNotch) {
+  const apexY = base - height
+  const tree = [`M${pt(cx - hw, base)}`]
+
+  for (let b = 0; b < boughs; b += 1) {
+    const t = b / boughs
+    const taper = (1 - t) ** 1.18
+    const droop = 0.045 * (1 - t)
+    // Outer point is the bough tip, inner point the shoulder at the trunk.
+    tree.push(`L${pt(cx - hw * taper, base - height * (t + droop))}`)
+    tree.push(`L${pt(cx - hw * taper * 0.66, base - height * (t + 0.62 / boughs))}`)
+  }
+  tree.push(`L${pt(cx, apexY)}`)
+
+  for (let b = boughs - 1; b >= 0; b -= 1) {
+    const t = b / boughs
+    const taper = (1 - t) ** rTaper
+    tree.push(`L${pt(cx + hw * taper * rNotch, base - height * (t + 0.62 / boughs))}`)
+    tree.push(`L${pt(cx + hw * taper, base - height * (t + 0.04 * (1 - t)))}`)
+  }
+  tree.push(`L${pt(cx + hw, base)}`, 'Z')
+  return tree.join('')
+}
+
+/**
+ * A dead snag: bare trunk, broken flat top. One per near layer at most, and its
+ * job is to interrupt the rhythm of the spires around it.
+ */
+function snag(cx, base, height, hw) {
+  const apexY = base - height
+  const tw = hw * 0.16
+  return `M${pt(cx - tw, base)}L${pt(cx - tw, apexY + height * 0.06)}L${pt(cx + tw, apexY + height * 0.1)}L${pt(cx + tw, base)}Z`
 }
 
 // ---------------------------------------------------------------------------
@@ -181,6 +202,18 @@ export function ridge(w, h, seed, { peaks, amp, depth, roughness, smooth = false
       next.push({ x: mx, y: Math.max(h * 0.02, Math.min(base, my)) }, b)
     }
     profile = next
+  }
+
+  // Ease the outer tenth of the tile into the end height with a smoothstep,
+  // which has zero slope at the edge. Matching the HEIGHT at both ends is only
+  // half of a seamless repeat: matching the height but not the slope leaves a
+  // sharp V at every tile boundary, and against an otherwise organic profile
+  // that V is the only straight line in the picture, so it is exactly what the
+  // eye locks onto. Applied after displacement, so it cannot be undone by it.
+  const EDGE = 0.1
+  for (const p of profile) {
+    const u = Math.min(p.x, w - p.x) / (w * EDGE)
+    if (u < 1) p.y = endY + (p.y - endY) * (u * u * (3 - 2 * u))
   }
 
   const cmds = [`M${pt(0, base)}`]
@@ -258,15 +291,36 @@ export function cloudbank(w, h, seed, { lumps, amp, spread = 0.72 }) {
 // width exactly, which makes it seamless by construction rather than by luck.
 // ---------------------------------------------------------------------------
 
-export function river(w, h, { periods, amp, thickness }) {
+/**
+ * @param periods   meanders per tile. Integer, or the tile will not repeat.
+ * @param amp       meander excursion as a fraction of band height
+ * @param thickness channel width at its nearest, as a fraction of band height
+ * @param taper     channel width at its furthest, relative to its nearest.
+ *
+ * `taper` is the perspective. A river lies flat in the ground plane, so the
+ * parts of it that sit higher in the band are further from the camera and have
+ * to be narrower. Without it the channel is a constant-width ribbon, which reads
+ * as a painted stripe rather than as water lying on a receding floor, and no
+ * amount of moving the band up or down fixes that.
+ *
+ * Width is keyed to the meander phase, not to x, so the near-side bends run wide
+ * and the far-side bends run narrow. That also keeps the seam exact: the phase
+ * is zero at both tile edges, so both edges are the same width.
+ */
+export function river(w, h, { periods, amp, thickness, taper = 1 }) {
   const mid = h * 0.5
   const a = h * amp
-  const half = h * thickness * 0.5
   const steps = periods * 8
   const seg = w / steps
   const wave = (i) => a * Math.sin((i / steps) * periods * 2 * Math.PI)
 
-  const edge = (offset, forward) => {
+  // 0 at the top of the meander (furthest), 1 at the bottom (nearest).
+  const half = (i) => {
+    const t = a === 0 ? 1 : (wave(i) + a) / (2 * a)
+    return h * thickness * 0.5 * (taper + (1 - taper) * t)
+  }
+
+  const edge = (sign, forward) => {
     const cmds = []
     const idx = forward
       ? Array.from({ length: steps }, (_, i) => i)
@@ -275,8 +329,8 @@ export function river(w, h, { periods, amp, thickness }) {
       const next = forward ? i + 1 : i - 1
       const x0 = seg * i
       const x1 = seg * next
-      const y0 = mid + offset + wave(i)
-      const y1 = mid + offset + wave(next)
+      const y0 = mid + wave(i) + sign * half(i)
+      const y1 = mid + wave(next) + sign * half(next)
       cmds.push(
         `C${pt(x0 + (x1 - x0) * 0.42, y0)} ${pt(x1 - (x1 - x0) * 0.42, y1)} ${pt(x1, y1)}`,
       )
@@ -285,10 +339,10 @@ export function river(w, h, { periods, amp, thickness }) {
   }
 
   return [
-    `M${pt(0, mid - half + wave(0))}`,
-    edge(-half, true),
-    `L${pt(w, mid + half + wave(steps))}`,
-    edge(half, false),
+    `M${pt(0, mid + wave(0) - half(0))}`,
+    edge(-1, true),
+    `L${pt(w, mid + wave(steps) + half(steps))}`,
+    edge(1, false),
     'Z',
   ].join('')
 }

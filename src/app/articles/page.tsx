@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
 import { Section, StationContent } from '@/components/layout/StationContent'
+import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { ARTICLES, ARTICLES_NOTE } from '@/content/articles'
@@ -38,6 +39,8 @@ export default function ArticlesPage() {
           Opinion pieces, published on LinkedIn. Neither is peer reviewed and neither
           pretends to be.
         </p>
+
+        <ScrollCue href="#articles" />
       </StationHero>
 
       <StationContent>

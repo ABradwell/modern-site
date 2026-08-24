@@ -14,7 +14,14 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { BANDS, BIOMES } from './lib/terrain-config.mjs'
+import {
+  BANDS,
+  BIOMES,
+  CAMERA,
+  REFERENCE,
+  apparentCrest,
+  groundLine,
+} from './lib/terrain-config.mjs'
 import {
   BASE_RATIO,
   cloudbank,
@@ -29,6 +36,18 @@ const preview = process.argv.includes('--preview')
 
 const GRAMMARS = { conifers, grassland, ridge, cloudbank }
 
+/** Fraction of a tile's height that is solid ground beneath the crest. */
+const GROUND = 1 - BASE_RATIO
+
+const round1 = (n) => Math.round(n * 10) / 10
+
+/** Depth-check floors, in dvh. See checkDepth. */
+const MIN_STRIP = 3.5
+const MIN_SUMMIT = 3
+
+/** Past this many repeats across the reference viewport, a band reads as wallpaper. */
+const MAX_REPEATS = 3.2
+
 // --- build ------------------------------------------------------------------
 
 const out = {}
@@ -36,22 +55,26 @@ let failures = 0
 
 for (const [key, biome] of Object.entries(BIOMES)) {
   out[key] = { label: biome.label, layers: [] }
+  const rows = []
 
   biome.layers.forEach((spec, i) => {
     const band = BANDS[i]
-    const { grammar, seed, crest, bottom, fill, ...opts } = spec
+    const { grammar, seed, lift, fill, ...opts } = spec
     const fn = GRAMMARS[grammar]
     if (!fn) throw new Error(`unknown grammar "${grammar}" in biome "${key}"`)
 
+    // Both derived from the camera, never declared per layer. See CAMERA in
+    // scripts/lib/terrain-config.mjs: the ladder of ground lines IS the angle,
+    // so it has to come from one place or it drifts out of perspective.
+    const bottom = groundLine(i)
+    const crest = apparentCrest(biome.nearCrest, i, lift)
+
     const d = fn(band.w, band.h, seed, opts)
-    const report = validate(d, band, `${key} depth${band.depth} (${grammar})`)
+    const geom = rendered(band, crest, opts)
+    const report = validate(d, band, `${key} depth${band.depth} (${grammar})`, geom)
     if (!report.ok) failures += 1
 
-    // Rendered element aspect. Reported so a silhouette that has drifted into
-    // fat-cone or needle territory is visible in the build log, not only on the
-    // page. Only meaningful for grammars with discrete repeated elements.
-    const count = opts.count ?? opts.peaks ?? opts.lumps ?? opts.rolls
-    const aspect = count ? (0.85 * count * band.h) / band.w : null
+    rows.push({ crest, bottom })
 
     out[key].layers.push({
       depth: band.depth,
@@ -62,25 +85,92 @@ for (const [key, biome] of Object.entries(BIOMES)) {
       bottom,
       fill: fill ?? band.depth,
       commands: report.commands,
-      aspect: aspect === null ? null : Math.round(aspect * 100) / 100,
+      aspect: geom.aspect,
       d,
     })
   })
 
+  if (!checkDepth(key, rows)) failures += 1
+
   if (biome.river) {
-    const band = BANDS[1]
-    const rh = Math.round(band.h * 0.5)
-    out[key].river = {
-      w: band.w,
-      h: rh,
-      bottom: biome.river.bottom,
-      height: biome.river.height,
-      d: river(band.w, rh, biome.river),
-    }
+    // Its own viewBox rather than a borrowed band, because a water ribbon has
+    // nothing to do with the aspect ladder the silhouettes are held to.
+    const { w, h, bottom, height, ...opts } = biome.river
+    out[key].river = { w, h, bottom, height, d: river(w, h, opts) }
   }
 }
 
 // --- validation -------------------------------------------------------------
+
+/** Rendered geometry at the reference viewport, for the build log. */
+function rendered(band, crest, opts) {
+  const count = opts.count ?? opts.peaks ?? opts.lumps ?? opts.rolls ?? null
+  const tilePx = ((crest / 100) * REFERENCE.height * band.w) / band.h
+  return {
+    count,
+    tilePx: Math.round(tilePx),
+    repeats: Math.round((REFERENCE.width / tilePx) * 10) / 10,
+    // Indicative only for the ridge and cloud grammars, where an "element" is a
+    // peak-and-saddle pair rather than a single standing object.
+    aspect: count ? Math.round(((0.85 * count * band.h) / band.w) * 100) / 100 : null,
+  }
+}
+
+/**
+ * THE DEPTH CHECK. This is the one that encodes the camera.
+ *
+ * A row behind reads as a separate row for one of two reasons, and it needs at
+ * least one of them:
+ *
+ *   GROUND STRIP. Open ground shows between the solid ground of the row in
+ *   front and this row's own ground line, so the eye sees a receding floor and
+ *   can count the rows on it. This is the test the old eye-level camera failed,
+ *   and it failed it decisively: with ground lines only 4dvh apart and crests up
+ *   to 36dvh, every strip came out NEGATIVE, meaning each row's ground line sat
+ *   behind the solid ground of the row in front. Four rows of trees, no visible
+ *   floor between them, one dense mass.
+ *
+ *   SUMMIT CLEARANCE. This row's summit stands clear of the nearer row's, so its
+ *   profile is legible against the sky even where the floor is not visible. This
+ *   is what carries the mountains, whose crests are tall enough to eat their own
+ *   ground strips, and it is why the check is an OR rather than an AND.
+ */
+function checkDepth(key, rows) {
+  const problems = []
+  const parts = []
+
+  if (rows[0].bottom > CAMERA.nearBase) {
+    problems.push(`near row at ${rows[0].bottom}dvh, past the ${CAMERA.nearBase} cap`)
+  }
+
+  for (let i = 1; i < rows.length; i += 1) {
+    const front = rows[i - 1]
+    const back = rows[i]
+
+    if (back.bottom >= front.bottom) {
+      problems.push(`row ${i} ground line does not recede (${back.bottom}dvh)`)
+      continue
+    }
+
+    const strip = round1(front.bottom - GROUND * front.crest - back.bottom)
+    const summit = round1(front.bottom - front.crest - (back.bottom - back.crest))
+    parts.push(`${strip >= MIN_STRIP ? 'floor' : 'sky'} ${strip}/${summit}`)
+
+    if (strip < MIN_STRIP && summit < MIN_SUMMIT) {
+      problems.push(
+        `row ${i} is not legible behind row ${i - 1}: ${strip}dvh of ground, ${summit}dvh of summit`,
+      )
+    }
+  }
+
+  const ok = problems.length === 0
+  console.log(
+    `${ok ? 'pass' : 'FAIL'}  depth  ${key.padEnd(28)}${parts.join('  ')}${
+      ok ? '' : `  <- ${problems.join('; ')}`
+    }`,
+  )
+  return ok
+}
 
 /**
  * Geometry checks that catch the ways a generated tile actually breaks: a crest
@@ -95,7 +185,7 @@ for (const [key, biome] of Object.entries(BIOMES)) {
  * of overlapping convex lumps under nonzero fill, where overlap is the intent,
  * so they get the bounds and seam checks only.
  */
-function validate(d, band, label) {
+function validate(d, band, label, geom) {
   const base = band.h * BASE_RATIO
   const main = d.split(/(?=M)/).filter(Boolean)[0]
   const commands = (d.match(/[MLCQZ]/g) || []).length
@@ -126,6 +216,12 @@ function validate(d, band, label) {
     problems.push(`ends at y=${seamY}, expected baseline ${base.toFixed(1)}`)
   }
 
+  // Repetition. Anything past three repeats across the reference viewport reads
+  // as wallpaper rather than as landscape.
+  if (geom.repeats > MAX_REPEATS) {
+    problems.push(`tile is only ${geom.tilePx}px, repeating ${geom.repeats} times`)
+  }
+
   // Every line-only subpath must be a simple polygon. Curve subpaths are
   // skipped: they are overlapping convex lumps where union is the intent.
   let crossings = 0
@@ -140,8 +236,11 @@ function validate(d, band, label) {
 
   const ok = problems.length === 0
   const detail = ok ? '' : `  <- ${problems.join('; ')}`
+  const shape = geom.aspect === null ? '        ' : `ar ${geom.aspect.toFixed(2)}  `
   console.log(
-    `${ok ? 'pass' : 'FAIL'}  ${String(commands).padStart(4)} cmds  ${label.padEnd(34)}${detail}`,
+    `${ok ? 'pass' : 'FAIL'}  ${String(commands).padStart(4)} cmds  ${label.padEnd(
+      34,
+    )}${shape}${String(geom.tilePx).padStart(4)}px x${geom.repeats}${detail}`,
   )
   return { ok, commands }
 }
@@ -182,6 +281,9 @@ const header = `// GENERATED FILE. Do not edit by hand.
 // scripts/lib/terrain-config.mjs. To change a silhouette, edit those and run
 // \`pnpm terrain\`. Output is deterministic, so the diff here is reviewable.
 //
+// \`crest\` and \`bottom\` are NOT authored. Both fall out of the camera model in
+// terrain-config.mjs, which is why every biome's rows recede on the same ladder.
+//
 // Each layer is an SVG path for a tile that repeats horizontally. It is
 // delivered as a CSS mask over a background-coloured div rather than as an
 // inline <svg>, which is what lets a single asset serve both themes: colour
@@ -197,12 +299,12 @@ export interface TerrainLayer {
   readonly h: number
   /** Drawn tile height in vh. Rendered tile width is crest * (w / h). */
   readonly crest: number
-  /** Baseline position in dvh from the top of the hero. bottom - crest = summit. */
+  /** Ground line in dvh from the top of the hero. bottom - crest = summit. */
   readonly bottom: number
   /** Which rung of the terrain colour ramp this layer takes, 1 near to 4 far. */
   readonly fill: 1 | 2 | 3 | 4
   readonly commands: number
-  /** Rendered element aspect, height over width. Near 2.8 is a good conifer. */
+  /** Rendered element aspect, height over width. Near 2.4 is a good conifer. */
   readonly aspect: number | null
   readonly d: string
 }
@@ -210,7 +312,7 @@ export interface TerrainLayer {
 export interface TerrainWater {
   readonly w: number
   readonly h: number
-  /** Baseline position in dvh, and band height in dvh. */
+  /** Ground line in dvh, and band height in dvh. */
   readonly bottom: number
   readonly height: number
   readonly d: string
@@ -225,6 +327,9 @@ export interface TerrainBiome {
 export type BiomeKey = ${Object.keys(BIOMES)
   .map((k) => `'${k}'`)
   .join(' | ')}
+
+/** dvh at which the ground plane converges. Shared by every biome. */
+export const HORIZON_DVH = ${CAMERA.horizon}
 
 export const TERRAIN: Record<BiomeKey, TerrainBiome> = ${JSON.stringify(out, null, 2)} as const
 `
@@ -294,20 +399,33 @@ if (preview) {
         })()
       : ''
 
-    // Paint far to near. The river slots in just behind the two near bands,
-    // which is where it sits in the real z-order.
+    // Paint far to near. The river goes in AFTER depth 2, not before it: it lies
+    // on the ground plane in front of that row, and behind it the row's solid
+    // ground hides the water completely.
     const byDepth = [...biome.layers].sort((a, b) => b.depth - a.depth)
     const painted = byDepth.map((l) => ({ depth: l.depth, svg: layer(l) }))
-    const body = painted.map((p) => (p.depth === 2 ? riverEl + p.svg : p.svg)).join('\n')
+    const body = painted.map((p) => (p.depth === 2 ? p.svg + riverEl : p.svg)).join('\n')
+
+    // Camera guides: the horizon every row converges on, and a tick at each
+    // ground line so the receding ladder is directly measurable off the sheet.
+    const ticks = biome.layers
+      .map(
+        (l) =>
+          `<line x1="0" y1="${(l.bottom * VH).toFixed(1)}" x2="52" y2="${(l.bottom * VH).toFixed(1)}" stroke="#8a3b2a" stroke-width="1.5"/><text x="56" y="${(l.bottom * VH + 4).toFixed(1)}" font-family="-apple-system,sans-serif" font-size="12" fill="#8a3b2a">${l.bottom}</text>`,
+      )
+      .join('')
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0" stop-color="${SKY[0]}"/><stop offset="0.46" stop-color="${SKY[1]}"/><stop offset="1" stop-color="${SKY[2]}"/>
 </linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
-<circle cx="${(W * 0.74).toFixed(0)}" cy="${(30 * VH).toFixed(0)}" r="${(11 * VH).toFixed(0)}" fill="#a68a64"/>
-<text x="72" y="${(30 * VH).toFixed(0)}" font-family="-apple-system,sans-serif" font-size="${(6.5 * VH).toFixed(0)}" font-weight="600" fill="#414833">${biome.label}</text>
+<circle cx="${(W * 0.74).toFixed(0)}" cy="${(24 * VH).toFixed(0)}" r="${(11 * VH).toFixed(0)}" fill="#a68a64"/>
+<text x="72" y="${(24 * VH).toFixed(0)}" font-family="-apple-system,sans-serif" font-size="${(6.5 * VH).toFixed(0)}" font-weight="600" fill="#414833">${biome.label}</text>
 ${body}
+<line x1="0" y1="${(CAMERA.horizon * VH).toFixed(1)}" x2="${W}" y2="${(CAMERA.horizon * VH).toFixed(1)}" stroke="#8a3b2a" stroke-width="1" stroke-dasharray="3 7" opacity="0.7"/>
+<text x="8" y="${(CAMERA.horizon * VH - 6).toFixed(1)}" font-family="-apple-system,sans-serif" font-size="12" fill="#8a3b2a">horizon ${CAMERA.horizon}dvh</text>
+${ticks}
 <line x1="0" y1="${VIEWPORT}" x2="${W}" y2="${VIEWPORT}" stroke="#8a3b2a" stroke-width="2" stroke-dasharray="10 8"/>
 <text x="8" y="${VIEWPORT - 8}" font-family="-apple-system,sans-serif" font-size="14" fill="#8a3b2a">100dvh fold</text>
 </svg>`
@@ -317,6 +435,6 @@ ${body}
 }
 
 if (failures > 0) {
-  console.error(`\n${failures} layer(s) failed geometry validation`)
+  console.error(`\n${failures} check(s) failed`)
   process.exit(1)
 }
