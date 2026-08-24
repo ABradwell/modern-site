@@ -120,10 +120,6 @@ export default function HomePage() {
         <Section id="work" title="Selected work">
           {/* The all-projects card lives inside the grid now, under the lead
               project, so there is no trailing link to append here. */}
-          <p className={`max-w-[46ch] ${PROSE} pb-5 text-foreground/90`}>
-            (Shameless music site plug){' '}
-            <a href="https://www.bradwellmusic.co.uk">bradwellmusic.co.uk</a>
-          </p>
           <FeaturedWork />
         </Section>
       </StationContent>

@@ -37,8 +37,8 @@ export default function ArticlesPage() {
           Writing
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          Opinion pieces, published on LinkedIn. Neither is peer reviewed and neither
-          pretends to be.
+          If this page is on the site, it will force me to write more Medium articles on
+          topics I know.
         </p>
 
         <ScrollCue href="#articles" />
