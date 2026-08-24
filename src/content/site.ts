@@ -30,12 +30,12 @@ export const SITE: SiteConfig = {
   contactLabel: 'Get in touch',
 } as const
 
-/** Eighteen words. The hero subtext cap is twenty. */
+/** Twenty-one words, and a fragment rather than a sentence, so no full stop. */
 export const HERO_SUBTEXT =
   'Extensive hands-on experience with Cloud Architecture, ML-Ops, Scalable Pipelines, API Security Automation, Codebase Security Suites, Biometric Authentication, App Development, and more'
 
 export const ABOUT = [
-  'I am a Manchester-based full-stack engineer, who is currently working within the biometric authentication industry. I am pursuing positions which have a strong sense of ownership, and a chance to lead and grow a team. As a founding member of my current engineering team, I have had the opportunity to learn with, grow with, and eventually lead our many diverse engineering functions.',
-  'These opportunities included SDK development, OAuth compliant development, Flink/Kafka pipelines, OpenAPI & OWASP security compliance, Dashboards & Interfaces, and a range of ML-Ops operations. I have helped oversee our companies transition into a fully AI-powered development team, while championing modern engineering mindsets and the shift from ticket-focus to outcome-focused.',
-  "Away from work I write and perform music (its deceivingly sad, don't google it), boulder (classic tech bro behaviour), and read. Appreciate you stopping by the site, please do reach out on LinkedIn!",
+  'I am a Manchester-based full-stack engineer currently working within the biometric authentication industry. I am pursuing positions which have a strong sense of ownership, and a chance to lead and grow a team. As a founding member of my current engineering team, I have had the opportunity to learn with, grow with, and eventually lead our many diverse engineering functions.',
+  "These opportunities included SDK development, OAuth-compliant development, Flink/Kafka pipelines, OpenAPI & OWASP security compliance, Dashboards & Interfaces, and a range of ML-Ops operations. I have helped oversee our company's transition into a fully AI-powered development team, while championing modern engineering mindsets and the shift from ticket-focused to outcome-focused.",
+  "Away from work I write and perform music (it's deceptively sad, don't google it), boulder (classic tech bro behaviour), and read. Appreciate you stopping by the site, please do reach out on LinkedIn!",
 ] as const

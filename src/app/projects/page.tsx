@@ -39,9 +39,9 @@ export default function ProjectsPage() {
           Projects
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          Nothing excites people like 3 year old projects with accompanying videos of me
-          as a younger lad, eh? Enjoy some archives from pre-industry (and pre 24/7
-          startup coding)
+          Nothing excites people like three-year-old projects with accompanying videos of
+          me as a younger lad, eh? Enjoy some archives from pre-industry, and pre-24/7
+          startup coding.
         </p>
 
         <ScrollCue href="#projects" />
