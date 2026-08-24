@@ -153,6 +153,7 @@ export default function ExperiencePage() {
                     <RoleProgression
                       items={role.progression}
                       employer={role.company}
+                      current={role.end === null}
                       className="mt-9"
                     />
                   ) : null}
