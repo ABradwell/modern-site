@@ -9,10 +9,12 @@ import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SkipLink } from '@/components/layout/SkipLink'
 import { ClientBoundary } from '@/components/system/error-boundary'
+import { JsonLd } from '@/components/system/json-ld'
 import { StationSwipe, StationSwipeContent } from '@/components/system/station-swipe'
 import { ThemeProvider } from '@/components/system/theme-provider'
 import { SITE } from '@/content/site'
-import { SKILLS } from '@/content/skills'
+import { CSP_META } from '@/lib/csp'
+import { siteGraph } from '@/lib/schema'
 import { Z } from '@/lib/z'
 
 import './globals.css'
@@ -32,17 +34,33 @@ export const metadata: Metadata = {
   applicationName: SITE.shortName,
   authors: [{ name: SITE.name, url: SITE.url }],
   creator: SITE.name,
-  alternates: { canonical: '/' },
+  /**
+   * NO `alternates.canonical` HERE, and no `openGraph.url`.
+   *
+   * Metadata merges shallowly per field down the route tree, so a canonical set
+   * in the root layout is INHERITED VERBATIM by every page that does not set
+   * its own. This file used to declare `canonical: '/'`, which meant /skills/,
+   * /projects/ and /articles/ each shipped a canonical pointing at the
+   * homepage: an instruction to every crawler to treat three of the site's four
+   * pages as duplicates of a fourth and drop them from the index, while
+   * sitemap.xml went on submitting them. Same trap for `openGraph.url`, which
+   * made every shared subpage link resolve and preview as the homepage.
+   *
+   * Both now live per page, next to the title and description they belong with.
+   */
   openGraph: {
     type: 'website',
     siteName: SITE.shortName,
-    title: `${SITE.name}, ${SITE.title}`,
-    description: SITE.description,
-    url: SITE.url,
     locale: 'en_GB',
   },
   twitter: { card: 'summary_large_image' },
-  robots: { index: true, follow: true },
+  /**
+   * NO `robots` HERE either. `index, follow` is already the default for any
+   * page that says nothing, so declaring it bought nothing and cost something:
+   * Next injects `noindex` into not-found.tsx on its own, and this then emitted
+   * a second, contradictory `robots` meta into out/404.html on the same
+   * document. Leaving it off means the 404 carries one unambiguous directive.
+   */
 }
 
 export const viewport: Viewport = {
@@ -50,23 +68,6 @@ export const viewport: Viewport = {
     { media: '(prefers-color-scheme: light)', color: '#ede0d4' },
     { media: '(prefers-color-scheme: dark)', color: '#202417' },
   ],
-}
-
-/** Person schema. knowsAbout falls out of the typed skills module for free. */
-const personSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: SITE.name,
-  url: SITE.url,
-  jobTitle: SITE.title,
-  worksFor: { '@type': 'Organization', name: SITE.company },
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Manchester',
-    addressCountry: 'GB',
-  },
-  sameAs: [SITE.github, SITE.linkedin],
-  knowsAbout: SKILLS.filter((s) => s.tier === 1).map((s) => s.name),
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -83,11 +84,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body className="min-h-[100svh] antialiased">
-        <script
-          type="application/ld+json"
-          // Static, author-controlled JSON. No user input reaches this.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
-        />
+        {/*
+          React hoists this into <head>, which is where a meta CSP has to be to
+          be enforced at all. It is the only copy of the policy that reaches
+          DigitalOcean App Platform and GitHub Pages, neither of which can set a
+          response header. See src/lib/csp.ts for what it can and cannot cover.
+        */}
+        <meta httpEquiv="Content-Security-Policy" content={CSP_META} />
+
+        {/*
+          Person and WebSite, declared once for the whole site. Each route adds
+          its own page-level node that references the Person by @id rather than
+          restating it. See src/lib/schema.ts.
+        */}
+        <JsonLd data={siteGraph} />
         <ThemeProvider>
           <SkipLink />
 

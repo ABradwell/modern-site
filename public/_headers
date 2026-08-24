@@ -4,12 +4,24 @@
 # These live here rather than in next.config because `headers` is unsupported
 # under `output: 'export'`. On Vercel the equivalent goes in vercel.json, and on
 # GitHub Pages there is no way to set response headers at all.
+#
+# KEEP IN SYNC WITH vercel.json AND WITH THE META CSP IN src/app/layout.tsx.
+# Three copies of one policy is the cost of static export across four hosts.
+# The meta tag is the only one of the three that reaches DigitalOcean App
+# Platform, which cannot set response headers at all. See README, Deploying.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'
+  # Two years, matching the preload list's minimum. `preload` is deliberately
+  # absent: submitting the domain is a one-way door that browsers cache for
+  # years and removal is slow, so it is the owner's call, not a default.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  # Severs the window.opener relationship for anything this site opens. Free
+  # here: the site opens no popups and runs no OAuth flow.
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: accelerometer=(), autoplay=(), battery=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), xr-spatial-tracking=()
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'self'; worker-src 'self'; upgrade-insecure-requests
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
