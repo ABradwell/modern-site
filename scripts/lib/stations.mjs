@@ -4,4 +4,4 @@
  * duplication is trivial to eyeball, and verify-export.mjs fails loudly if a
  * route here has no corresponding HTML file, which is what catches drift.
  */
-export const STATIONS = ['/', '/skills', '/experience', '/projects', '/articles']
+export const STATIONS = ['/', '/experience', '/projects', '/articles']

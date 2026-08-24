@@ -25,15 +25,9 @@ export const STATIONS: readonly Station[] = [
   { href: '/', label: 'Home', short: 'Home', biome: 'forest' },
   {
     href: '/skills',
-    label: 'Skills',
-    short: 'Skills',
-    biome: 'plains',
-  },
-  {
-    href: '/experience',
     label: 'Experience',
-    short: 'Work',
-    biome: 'foothills',
+    short: 'Experience',
+    biome: 'plains',
   },
   {
     href: '/projects',

@@ -55,7 +55,7 @@ export default function HomePage() {
           </a>
         </div>
 
-        <ScrollCue href="#work" />
+        <ScrollCue href="#about" />
       </StationHero>
 
       <StationContent>
@@ -66,15 +66,16 @@ export default function HomePage() {
             <div className="max-w-[65ch]">
               {ABOUT.map((paragraph, i) => (
                 <Reveal key={i} index={i}>
-                  <p className="mb-6 text-base leading-relaxed text-foreground/90">
+                  <p className="mb-6 text-lg leading-relaxed text-foreground/90">
                     {paragraph}
                   </p>
                 </Reveal>
               ))}
               <Reveal index={ABOUT.length}>
                 <Link
-                  href="/experience"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+                  href="/skills"
+                  className="rounded-ctl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
+                  style={{ "display": "flex", }}
                 >
                   Full experience
                   <ArrowUpRight className="size-3.5" weight="regular" aria-hidden />
