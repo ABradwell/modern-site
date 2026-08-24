@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# pnpm settings live in package.json. A project .npmrc here would risk
+# committing the machine's CodeArtifact auth token.
+.npmrc
+
+# editors
+.idea
+.vscode/*
+!.vscode/extensions.json

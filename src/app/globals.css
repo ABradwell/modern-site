@@ -1,0 +1,365 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* ---------------------------------------------------------------------------
+   Dark variant.
+
+   Tailwind v4 wires `dark:` to prefers-color-scheme by default, which would
+   ignore the theme control entirely. This redeclares it to follow the
+   data-theme attribute, and keeps the media query as the no-JS fallback for
+   readers who arrive before next-themes' blocking script has run.
+--------------------------------------------------------------------------- */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   1. RAW RAMPS
+
+   Two hue families from the source palette. Warm earth at 54-75 degrees
+   (brown, tan, cream) and green at 119-123 degrees (sage, moss). Max chroma
+   across the whole set is 0.070, which is why the low-chroma and
+   sub-80-percent-saturation rules hold for free here and no gradient built
+   from these values can go neon.
+
+   Components never reference this layer. It exists so the semantic layer
+   below reads as a set of decisions rather than a pile of hex codes.
+--------------------------------------------------------------------------- */
+:root {
+  /* source palette */
+  --earth-900: #7f5539; /* brown  L.489 H54  */
+  --earth-600: #a68a64; /* tan    L.650 H75  */
+  --earth-100: #ede0d4; /* cream  L.914 H65  */
+  --moss-500: #656d4a; /* sage   L.518 H119 */
+  --moss-700: #414833; /* moss   L.389 H123 */
+
+  /* derived, computed against the contrast floors rather than eyeballed */
+  --earth-050: #f5efe9; /* lifted cream. Not #ffffff. */
+  --earth-200: #e3d5c7;
+  --earth-300: #d3c2b0;
+  --earth-400: #bca68d;
+  --earth-500: #817854;
+  --moss-750: #3a4130;
+  --moss-800: #2b3021;
+  --moss-850: #262a1c;
+  --moss-900: #202417;
+  --moss-950: #171a10;
+  --ink-soft: #5c6444; /* 4.82:1 on cream */
+  --paper-soft: #b9b2a4; /* 7.52:1 on moss-900 */
+
+  /* the one warm-red the palette lacks, pulled toward the earth family so it
+     does not read as a foreign hue. 5.92:1 both ways against cream. */
+  --brick-700: #8a3b2a;
+  --brick-400: #d07a60;
+}
+
+/* ---------------------------------------------------------------------------
+   2. SEMANTIC LAYER, LIGHT
+
+   Named to shadcn/ui's contract, because expressing the palette through those
+   names rather than alongside them is what stops every shadcn component from
+   rendering unthemed. Site-only tokens sit alongside at the bottom.
+
+   Every text pair here is measured. See scripts/check-contrast.mjs.
+--------------------------------------------------------------------------- */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --background: var(--earth-100);
+  --foreground: var(--moss-700); /* 7.37:1  AAA */
+
+  --card: var(--earth-050);
+  --card-foreground: var(--moss-700); /* 8.37:1 */
+  --popover: var(--earth-050);
+  --popover-foreground: var(--moss-700);
+
+  --primary: var(--earth-900); /* 4.97:1 on background */
+  --primary-foreground: var(--earth-100); /* 4.97:1 on primary */
+
+  --secondary: var(--earth-300);
+  --secondary-foreground: var(--moss-700); /* 5.51:1 */
+
+  --muted: var(--earth-200);
+  --muted-foreground: var(--ink-soft); /* 4.82:1 on background */
+
+  /* shadcn's --accent is the quiet hover wash, not the brand colour. */
+  --accent: #e0cfc1;
+  --accent-foreground: var(--moss-700); /* 6.30:1 */
+
+  --destructive: var(--brick-700); /* 5.92:1 */
+  --destructive-foreground: var(--earth-100);
+
+  --border: rgb(65 72 51 / 0.14);
+  --border-strong: rgb(65 72 51 / 0.26);
+  --input: rgb(65 72 51 / 0.2);
+  --ring: var(--moss-700); /* 7.37:1, clears the 3:1 floor 2.4x */
+
+  /* --- scene --- */
+  --sky-high: var(--earth-050);
+  --sky-mid: var(--earth-100);
+  --sky-low: var(--earth-300);
+  --haze: rgb(166 138 100 / 0.34);
+
+  --orb: var(--earth-600); /* tan sun. 2.52:1. Decorative, aria-hidden. */
+  --orb-core: #cbb495;
+  --orb-halo: rgb(166 138 100 / 0.26);
+
+  /* terrain, front to back. Decorative, so no contrast floor applies.
+     Monotonically lighter with distance, which is atmospheric perspective. */
+  --terrain-1: var(--moss-700); /* near silhouette */
+  --terrain-2: var(--moss-500);
+  --terrain-3: var(--earth-500);
+  --terrain-4: var(--earth-400); /* far, hazy */
+  --water: #9aa88f;
+
+  --logo-ink: var(--ink-soft); /* 4.82:1 */
+  --grain-opacity: 0.035;
+
+  --shade-1: 0 1px 2px rgb(65 72 51 / 0.03);
+  --shade-2: 0 18px 48px -24px rgb(65 72 51 / 0.045);
+}
+
+/* ---------------------------------------------------------------------------
+   3. SEMANTIC LAYER, DARK
+
+   A tint of the same family, not a hue flip, so the page never feels like a
+   different website. The accent moves brown -> tan because brown on the dark
+   surface measures 2.46:1 and fails; tan measures 4.86:1 and clears AA. That
+   substitution is load-bearing, not cosmetic.
+--------------------------------------------------------------------------- */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --background: var(--moss-900);
+  --foreground: var(--earth-100); /* 12.23:1  AAA */
+
+  --card: var(--moss-800);
+  --card-foreground: var(--earth-100); /* 10.48:1 */
+  --popover: var(--moss-800);
+  --popover-foreground: var(--earth-100);
+
+  --primary: var(--earth-600); /* 4.86:1 on background */
+  --primary-foreground: var(--moss-900); /* 4.86:1 on primary */
+
+  --secondary: var(--moss-750);
+  --secondary-foreground: var(--earth-100); /* 8.19:1 */
+
+  --muted: var(--moss-850);
+  --muted-foreground: var(--paper-soft); /* 7.52:1 */
+
+  --accent: #353423;
+  --accent-foreground: var(--earth-100); /* 9.73:1 */
+
+  --destructive: var(--brick-400); /* 5.00:1 */
+  --destructive-foreground: var(--moss-900);
+
+  --border: rgb(237 224 212 / 0.12);
+  --border-strong: rgb(237 224 212 / 0.22);
+  --input: rgb(237 224 212 / 0.18);
+  --ring: var(--earth-100); /* 12.23:1 */
+
+  --sky-high: #1c1f14;
+  --sky-mid: var(--moss-850);
+  --sky-low: var(--moss-750); /* dusk lift at the horizon */
+  --haze: rgb(166 138 100 / 0.16);
+
+  --orb: var(--earth-100); /* cream moon */
+  --orb-core: #f4ece2;
+  --orb-halo: rgb(237 224 212 / 0.09);
+
+  /* terrain-1 is darker than --background on purpose, so where the near layer
+     passes over content it reads as shadow rather than as a foreign panel. */
+  --terrain-1: #151810;
+  --terrain-2: #1e2216;
+  --terrain-3: #262a1b;
+  --terrain-4: #2d3223;
+  --water: #2f3a33;
+
+  --logo-ink: var(--earth-400); /* 6.77:1 */
+  --grain-opacity: 0.045;
+
+  --shade-1: 0 1px 2px rgb(15 17 9 / 0.04);
+  --shade-2: 0 18px 48px -24px rgb(15 17 9 / 0.05);
+}
+
+/* ---------------------------------------------------------------------------
+   4. SYSTEM DEFAULT, the third theme state
+
+   next-themes writes data-theme before paint, so in practice this block serves
+   readers with JS disabled. The :not([data-theme]) guard is what lets the
+   attribute win without !important or specificity games.
+--------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --background: var(--moss-900);
+    --foreground: var(--earth-100);
+    --card: var(--moss-800);
+    --card-foreground: var(--earth-100);
+    --popover: var(--moss-800);
+    --popover-foreground: var(--earth-100);
+    --primary: var(--earth-600);
+    --primary-foreground: var(--moss-900);
+    --secondary: var(--moss-750);
+    --secondary-foreground: var(--earth-100);
+    --muted: var(--moss-850);
+    --muted-foreground: var(--paper-soft);
+    --accent: #353423;
+    --accent-foreground: var(--earth-100);
+    --destructive: var(--brick-400);
+    --destructive-foreground: var(--moss-900);
+    --border: rgb(237 224 212 / 0.12);
+    --border-strong: rgb(237 224 212 / 0.22);
+    --input: rgb(237 224 212 / 0.18);
+    --ring: var(--earth-100);
+
+    --sky-high: #1c1f14;
+    --sky-mid: var(--moss-850);
+    --sky-low: var(--moss-750);
+    --haze: rgb(166 138 100 / 0.16);
+    --orb: var(--earth-100);
+    --orb-core: #f4ece2;
+    --orb-halo: rgb(237 224 212 / 0.09);
+    --terrain-1: #151810;
+    --terrain-2: #1e2216;
+    --terrain-3: #262a1b;
+    --terrain-4: #2d3223;
+    --water: #2f3a33;
+    --logo-ink: var(--earth-400);
+    --grain-opacity: 0.045;
+    --shade-1: 0 1px 2px rgb(15 17 9 / 0.04);
+    --shade-2: 0 18px 48px -24px rgb(15 17 9 / 0.05);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   5. TAILWIND THEME
+
+   `inline` is load-bearing. Without it Tailwind resolves each var at the point
+   of definition and freezes the light value into the generated utility, so the
+   dark override never reaches bg-background. Dark mode then looks wired up and
+   silently does nothing.
+
+   Note there is deliberately no --breakpoint-* here. v4's defaults already are
+   sm 640 / md 768 / lg 1024 / xl 1280 / 2xl 1536, and declaring them REPLACES
+   the scale rather than extending it.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sky-high: var(--sky-high);
+  --color-sky-mid: var(--sky-mid);
+  --color-sky-low: var(--sky-low);
+  --color-terrain-1: var(--terrain-1);
+  --color-terrain-2: var(--terrain-2);
+  --color-terrain-3: var(--terrain-3);
+  --color-terrain-4: var(--terrain-4);
+  --color-water: var(--water);
+  --color-logo-ink: var(--logo-ink);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Shape lock. One scale for the whole site: cards 12px, controls 8px,
+     nothing pill. shadcn derives its own scale from --radius. */
+  --radius: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-ctl: 0.5rem;
+
+  --shadow-soft: var(--shade-1);
+  --shadow-lift: var(--shade-2);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------------------------------------------------------------------------
+   6. BASE
+--------------------------------------------------------------------------- */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    /* Parallax layers overshoot. Horizontal overflow on mobile is a critical
+       failure, so this is not optional. */
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Tabular figures wherever numbers line up in a column. */
+  time,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   7. REDUCED MOTION
+
+   Motion islands additionally gate themselves with useReducedMotion(), which
+   collapses their transform ranges to zero. This block is the belt to that
+   braces: it also catches CSS transitions the islands do not own.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

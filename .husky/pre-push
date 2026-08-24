@@ -1,0 +1,3 @@
+# Load-bearing, not belt-and-braces: `next lint` was removed in Next 16 and
+# `next build` no longer lints. Without this, lint errors reach main silently.
+pnpm lint
