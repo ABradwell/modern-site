@@ -64,8 +64,8 @@ export default function ExperiencePage() {
           Experience
         </h1>
         <p className="mt-6 max-w-[46ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-          Moving to the UK in 2023, my inital stoming ground was working at the spoons in
-          Burton on Trent. Funnily enough, that job didn&apos;t make the list below.
+          Moving to the UK in 2023, my initial stomping ground was working at the spoons
+          in Burton upon Trent. Funnily enough, that job didn&apos;t make the list below.
         </p>
 
         <ScrollCue href="#roles" />
@@ -249,7 +249,7 @@ export default function ExperiencePage() {
             the same shape twice and tier two stays visibly tier two. */}
         <Section id="also" title="Also worked with">
           <p className={`mb-8 max-w-[60ch] ${PROSE_TIGHT} text-muted-foreground`}>
-            Some freebies and packages I&apos;ve had the chance to learn in passing
+            Some freebies and packages I&apos;ve had the chance to learn in passing.
           </p>
           <ul className="flex max-w-[70ch] flex-wrap gap-x-6 gap-y-2">
             {tierTwo.map((skill) => (
