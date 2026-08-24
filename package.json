@@ -24,7 +24,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
-      "eslint --fix --max-warnings=0",
+      "eslint --fix --max-warnings=0 --no-warn-ignored",
       "prettier --write"
     ],
     "*.{json,css,md,yml,yaml}": [
@@ -45,6 +45,7 @@
     "motion": "13.1.1",
     "next": "16.3.2",
     "next-themes": "0.4.6",
+    "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "3.6.0"

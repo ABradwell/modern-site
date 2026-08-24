@@ -28,13 +28,13 @@ LinkedIn essays only.
 
 ## The journey
 
-| Route | Biome | Terrain grammar | Content |
-|---|---|---|---|
-| `/` | Forest | conifer spires | hero, featured work, short about, contact |
-| `/skills` | Plains with a river | grass ridges + water band | technology wall by category |
-| `/experience` | Foothills | low layered ridges | roles, education, clearances |
-| `/projects` | Mountain range | high jagged ridges | five projects |
-| `/articles` | Above the cloud line | cloudbank | two essays, honest note on what is coming |
+| Route         | Biome                | Terrain grammar           | Content                                   |
+| ------------- | -------------------- | ------------------------- | ----------------------------------------- |
+| `/`           | Forest               | conifer spires            | hero, featured work, short about, contact |
+| `/skills`     | Plains with a river  | grass ridges + water band | technology wall by category               |
+| `/experience` | Foothills            | low layered ridges        | roles, education, clearances              |
+| `/projects`   | Mountain range       | high jagged ridges        | five projects                             |
+| `/articles`   | Above the cloud line | cloudbank                 | two essays, honest note on what is coming |
 
 Forward travel pans the terrain left. Back travel pans it right. Direction derives from the
 station index, so the browser back button reverses correctly without special casing.
@@ -192,16 +192,16 @@ Everything translates **up**. Depth is how much of the scroll each layer cancels
 layers cancel least and so move fastest. Content cancels nothing, so it moves fastest of all
 and emerges from beneath the near terrain.
 
-| Layer | translateY at progress 1 | Opacity |
-|---|---|---|
-| sky, orb | +52vh | constant |
-| haze band | +38vh | 1 to 0.55 over 0.55 to 1 |
-| copy block | +14vh | 1 to 0 over 0.30 to 0.72 |
-| depth 4, far | +27vh | constant |
-| depth 3 | +19vh | constant |
-| depth 2 | +12vh | constant |
-| depth 1, near | +6vh | constant |
-| `<main>` | none | n/a |
+| Layer         | translateY at progress 1 | Opacity                  |
+| ------------- | ------------------------ | ------------------------ |
+| sky, orb      | +52vh                    | constant                 |
+| haze band     | +38vh                    | 1 to 0.55 over 0.55 to 1 |
+| copy block    | +14vh                    | 1 to 0 over 0.30 to 0.72 |
+| depth 4, far  | +27vh                    | constant                 |
+| depth 3       | +19vh                    | constant                 |
+| depth 2       | +12vh                    | constant                 |
+| depth 1, near | +6vh                     | constant                 |
+| `<main>`      | none                     | n/a                      |
 
 Near against sky is 46vh of relative travel, which is the effect. Near against far is 21vh,
 which is what makes it read as depth rather than a decal. Terrain opacity stays constant:
@@ -220,20 +220,20 @@ palette does not, and that is worth stating because it is the reason the composi
 ### Horizontal parallax, between stations
 
 ```ts
-export const STATIONS = ['/', '/skills', '/experience', '/projects', '/articles'] as const;
+export const STATIONS = ['/', '/skills', '/experience', '/projects', '/articles'] as const
 ```
 
 Each of the four depth strips is `500vw` wide, holding five biome segments side by side, and
 all four target the same offset: `-index * 100vw`. Horizontal parallax comes from **staggered
 spring stiffness**, not from different targets:
 
-| Strip | stiffness | damping | behaviour |
-|---|---|---|---|
-| depth 1, near | 90 | 22 | snaps past |
-| depth 2 | 74 | 22 | |
-| depth 3 | 60 | 22 | |
-| depth 4, far | 48 | 22 | drifts |
-| sky, orb | 40 | 24 | barely moves |
+| Strip         | stiffness | damping | behaviour    |
+| ------------- | --------- | ------- | ------------ |
+| depth 1, near | 90        | 22      | snaps past   |
+| depth 2       | 74        | 22      |              |
+| depth 3       | 60        | 22      |              |
+| depth 4, far  | 48        | 22      | drifts       |
+| sky, orb      | 40        | 24      | barely moves |
 
 Because every strip converges on the same value, the biomes are **perfectly aligned at rest**
 and only diverge mid-transition. Near terrain sweeps past while distant mountains barely
@@ -265,9 +265,12 @@ same time.
 Delivery is a **CSS mask on a background-coloured div**, not an inline `<svg>`:
 
 ```css
-mask-image: url("data:image/svg+xml,...tile..."),
-            linear-gradient(to bottom, #000 0 76%, transparent 100%);
-mask-size: auto var(--crest), 100% calc(100% - var(--crest) + 1px);
+mask-image:
+  url('data:image/svg+xml,...tile...'),
+  linear-gradient(to bottom, #000 0 76%, transparent 100%);
+mask-size:
+  auto var(--crest),
+  100% calc(100% - var(--crest) + 1px);
 mask-repeat: repeat-x, no-repeat;
 mask-composite: add;
 ```
@@ -336,14 +339,14 @@ Worth recording because it is the obvious next idea and it is a defect. Interpol
 `--surface` from cream to moss while `--text-primary` goes the other way means the two ramps
 cross. Contrast measured across the transition:
 
-| progress | contrast |
-|---|---|
-| 0.00 | 7.37 |
-| 0.15 | 3.84 fails AA |
-| 0.25 | 2.47 fails 3:1 |
+| progress | contrast           |
+| -------- | ------------------ |
+| 0.00     | 7.37               |
+| 0.15     | 3.84 fails AA      |
+| 0.25     | 2.47 fails 3:1     |
 | **0.45** | **1.00 invisible** |
-| 0.65 | 2.53 fails 3:1 |
-| 1.00 | 12.23 |
+| 0.65     | 2.53 fails 3:1     |
+| 1.00     | 12.23              |
 
 Roughly 68 percent of the transition sits below the AA floor and about half below 3:1. Whether
 a reader lands in that band depends entirely on scroll speed, so anyone who stops mid-scroll
@@ -433,8 +436,8 @@ Pages are pure presentation. `src/content/{site,skills,experience,projects,artic
 types in `types.ts`. The technique that makes this earn its keep:
 
 ```ts
-export const skills = [ /* ... */ ] satisfies readonly Skill[];
-export type KnownSlug = (typeof skills)[number]['slug'];
+export const skills = [/* ... */] satisfies readonly Skill[]
+export type KnownSlug = (typeof skills)[number]['slug']
 ```
 
 `satisfies` rather than a type annotation preserves literal types, so `KnownSlug` is a real

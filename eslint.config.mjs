@@ -8,18 +8,22 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
 
-  // eslint-config-next depends on jsx-a11y but does not enable its recommended
-  // set. This site has a hard accessibility floor, so we layer it on explicitly.
-  // It must also be a DIRECT devDependency: pnpm's isolated node_modules will not
-  // resolve a transitive dep from our own config file.
-  jsxA11y.flatConfigs.strict,
+  // eslint-config-next depends on jsx-a11y but enables almost none of its rules.
+  // This site has a hard accessibility floor, so the strict set is layered on.
+  //
+  // RULES ONLY, not the whole flat config. eslint-config-next has already
+  // registered the plugin, and spreading `jsxA11y.flatConfigs.strict` wholesale
+  // registers it a second time, which ESLint rejects outright with
+  // "Cannot redefine plugin".
+  //
+  // jsx-a11y also has to be a DIRECT devDependency despite being a transitive
+  // one, because pnpm's isolated node_modules will not resolve a transitive
+  // package from our own config file.
+  { rules: jsxA11y.flatConfigs.strict.rules },
 
   {
     rules: {
-      '@typescript-eslint/consistent-type-imports': [
-        'error',
-        { prefer: 'type-imports' },
-      ],
+      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       // next/link renders the anchor itself.
       'jsx-a11y/anchor-is-valid': 'off',

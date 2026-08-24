@@ -87,7 +87,7 @@ export function conifers(w, h, seed, { count, boughs, snags = 0, minH = 0.45 }) 
       const taper = (1 - t) ** 1.18
       const droop = 0.045 * (1 - t)
       tree.push(`L${pt(cx - hw * taper, base - height * (t + droop))}`)
-      tree.push(`L${pt(cx - hw * taper * 0.52, base - height * (t + 0.62 / boughs))}`)
+      tree.push(`L${pt(cx - hw * taper * 0.66, base - height * (t + 0.62 / boughs))}`)
     }
     tree.push(`L${pt(cx, apexY)}`)
 
@@ -110,13 +110,13 @@ export function conifers(w, h, seed, { count, boughs, snags = 0, minH = 0.45 }) 
 }
 
 // ---------------------------------------------------------------------------
-// 2. GRASSLAND. Plains. Low soft undulation and tufts. No spires anywhere.
+// 2. GRASSLAND. Plains. Low soft undulation plus sentinel poplars. No spires.
 // ---------------------------------------------------------------------------
 
-export function grassland(w, h, seed, { rolls, amp, tufts = 0 }) {
+export function grassland(w, h, seed, { rolls, amp, sentinels = 0 }) {
   const rand = rng(seed)
   const base = h * BASE_RATIO
-  const crest = base - h * amp
+  const crest = base - h * amp * 0.5
   const step = w / rolls
 
   // Cubic rolls, starting and ending at the same y so the tile is seamless.
@@ -124,7 +124,7 @@ export function grassland(w, h, seed, { rolls, amp, tufts = 0 }) {
   for (let i = 0; i < rolls; i += 1) {
     const x0 = step * i
     const x1 = step * (i + 1)
-    const lift = (rand() - 0.5) * h * amp * 1.5
+    const lift = (rand() - 0.5) * h * amp * 0.6
     const y1 = i === rolls - 1 ? crest : crest + lift
     cmds.push(
       `C${pt(x0 + step * 0.34, crest + lift * 0.5)} ${pt(x1 - step * 0.34, y1 - lift * 0.35)} ${pt(x1, y1)}`,
@@ -132,14 +132,15 @@ export function grassland(w, h, seed, { rolls, amp, tufts = 0 }) {
   }
   cmds.push(`L${pt(w, base)}`, `L${pt(w, h)}`, `L${pt(0, h)}`, 'Z')
 
-  // Tufts ride on top of the rolls as short quadratic blades, as separate
-  // subpaths so they union rather than cutting into the crest.
-  for (let t = 0; t < tufts; t += 1) {
-    const tx = rand() * w
-    const th = h * amp * (1.4 + rand() * 1.6)
-    const tw = h * amp * 0.5
+  // Sentinel poplars. Separate subpaths, so they union with the ground rather
+  // than cutting into it. These are what stop a plains band reading as a flat
+  // horizontal rule, and they carry the eye toward the river.
+  for (let t = 0; t < sentinels; t += 1) {
+    const tx = (w * (t + 0.5)) / sentinels + (rand() - 0.5) * (w / sentinels) * 0.5
+    const th = h * (0.34 + rand() * 0.3)
+    const tw = th * 0.13
     cmds.push(
-      `M${pt(tx - tw, base)}Q${pt(tx - tw * 0.2, crest - th)} ${pt(tx + tw * 0.3, crest - th * 0.55)}Q${pt(tx + tw * 0.4, base)} ${pt(tx + tw, base)}Z`,
+      `M${pt(tx - tw, base)}Q${pt(tx - tw * 1.15, crest - th * 0.62)} ${pt(tx, crest - th)}Q${pt(tx + tw * 1.15, crest - th * 0.62)} ${pt(tx + tw, base)}Z`,
     )
   }
 
@@ -150,7 +151,7 @@ export function grassland(w, h, seed, { rolls, amp, tufts = 0 }) {
 // 3. RIDGE. Foothills and mountains. Fractal midpoint displacement, angular.
 // ---------------------------------------------------------------------------
 
-export function ridge(w, h, seed, { peaks, amp, depth, roughness }) {
+export function ridge(w, h, seed, { peaks, amp, depth, roughness, smooth = false }) {
   const rand = rng(seed)
   const base = h * BASE_RATIO
   const usable = base - h * 0.03
@@ -183,31 +184,72 @@ export function ridge(w, h, seed, { peaks, amp, depth, roughness }) {
   }
 
   const cmds = [`M${pt(0, base)}`]
-  for (const p of profile) cmds.push(`L${pt(p.x, p.y)}`)
+  if (smooth) {
+    // Quadratic through midpoints: every vertex becomes a control point and the
+    // curve passes through the midpoint of each pair. Rounds the whole profile
+    // without moving it, which is what separates a rolling foothill from a
+    // mountain crag while keeping one grammar. A smoothed curve stays inside
+    // the convex hull of its control points, so it cannot introduce a crossing
+    // the source polyline did not already have.
+    cmds.push(`L${pt(profile[0].x, profile[0].y)}`)
+    for (let i = 1; i < profile.length - 1; i += 1) {
+      const a = profile[i]
+      const b = profile[i + 1]
+      cmds.push(`Q${pt(a.x, a.y)} ${pt((a.x + b.x) / 2, (a.y + b.y) / 2)}`)
+    }
+    const last = profile[profile.length - 1]
+    cmds.push(`L${pt(last.x, last.y)}`)
+  } else {
+    for (const p of profile) cmds.push(`L${pt(p.x, p.y)}`)
+  }
   cmds.push(`L${pt(w, base)}`, `L${pt(w, h)}`, `L${pt(0, h)}`, 'Z')
   return cmds.join('')
 }
 
 // ---------------------------------------------------------------------------
-// 4. CLOUDBANK. Above the cloud line. Pure quadratic mass, no tips at all.
+// 4. CLOUDBANK. Distant haze and cloud sea. Quadratic mass, no tips at all.
 // ---------------------------------------------------------------------------
 
-export function cloudbank(w, h, seed, { lumps, amp }) {
+/**
+ * @param lumps  number of hummocks across the tile
+ * @param amp    crown height as a fraction of available height
+ * @param spread how wide each hummock is relative to its slot. Below 1 the
+ *               hummocks stay distinct; near 1 they merge into a plateau, which
+ *               is what made an earlier cloud sea read as a stone shelf.
+ */
+export function cloudbank(w, h, seed, { lumps, amp, spread = 0.72 }) {
   const rand = rng(seed)
   const base = h * BASE_RATIO
   const step = w / lumps
 
-  // Independent overlapping subpaths under nonzero fill, so lumps may merge
+  // Independent overlapping subpaths under nonzero fill, so hummocks may merge
   // without cutting notches where they cross.
   const cmds = [`M${pt(0, base)}L${pt(w, base)}L${pt(w, h)}L${pt(0, h)}Z`]
+
+  /**
+   * One hummock. The crown is deliberately lopsided: the apex sits left of
+   * centre and the two arcs have different control heights, so a row of them
+   * does not read as a repeated dome.
+   */
+  const hummock = (cx, rw, rh) =>
+    `M${pt(cx - rw, base)}Q${pt(cx - rw * 0.55, base - rh * 1.24)} ${pt(cx - rw * 0.08, base - rh)}Q${pt(cx + rw * 0.52, base - rh * 0.84)} ${pt(cx + rw, base)}Z`
+
   for (let i = 0; i < lumps; i += 1) {
     const cx = step * (i + 0.5) + (rand() - 0.5) * step * 0.4
-    const rw = step * (0.62 + rand() * 0.34)
-    const rh = (base - h * 0.04) * amp * (0.55 + rand() * 0.45)
-    cmds.push(
-      `M${pt(cx - rw, base)}Q${pt(cx - rw * 0.62, base - rh * 1.18)} ${pt(cx, base - rh)}Q${pt(cx + rw * 0.66, base - rh * 1.1)} ${pt(cx + rw, base)}Z`,
-    )
+    const rw = step * spread * (0.8 + rand() * 0.5)
+    // Wide height variation is what breaks up the crown. At a narrow range every
+    // hummock tops out at the same y and the union becomes a flat plateau.
+    const rh = (base - h * 0.04) * amp * (0.35 + rand() * 0.65)
+    cmds.push(hummock(cx, rw, rh))
   }
+
+  // A hummock straddling the tile edge, drawn identically at x=0 and x=w.
+  // Without it the crown drops to the base line at every tile boundary and the
+  // repeat shows up as a row of vertical notches, which is exactly what it did.
+  const edgeW = step * spread * (0.8 + rand() * 0.5)
+  const edgeH = (base - h * 0.04) * amp * (0.35 + rand() * 0.65)
+  cmds.push(hummock(0, edgeW, edgeH), hummock(w, edgeW, edgeH))
+
   return cmds.join('')
 }
 

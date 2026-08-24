@@ -39,7 +39,7 @@ for (const [key, biome] of Object.entries(BIOMES)) {
 
   biome.layers.forEach((spec, i) => {
     const band = BANDS[i]
-    const { grammar, seed, ...opts } = spec
+    const { grammar, seed, crest, bottom, fill, ...opts } = spec
     const fn = GRAMMARS[grammar]
     if (!fn) throw new Error(`unknown grammar "${grammar}" in biome "${key}"`)
 
@@ -47,23 +47,35 @@ for (const [key, biome] of Object.entries(BIOMES)) {
     const report = validate(d, band, `${key} depth${band.depth} (${grammar})`)
     if (!report.ok) failures += 1
 
+    // Rendered element aspect. Reported so a silhouette that has drifted into
+    // fat-cone or needle territory is visible in the build log, not only on the
+    // page. Only meaningful for grammars with discrete repeated elements.
+    const count = opts.count ?? opts.peaks ?? opts.lumps ?? opts.rolls
+    const aspect = count ? (0.85 * count * band.h) / band.w : null
+
     out[key].layers.push({
       depth: band.depth,
       grammar,
       w: band.w,
       h: band.h,
-      crest: band.crest,
+      crest,
+      bottom,
+      fill: fill ?? band.depth,
       commands: report.commands,
+      aspect: aspect === null ? null : Math.round(aspect * 100) / 100,
       d,
     })
   })
 
   if (biome.river) {
     const band = BANDS[1]
+    const rh = Math.round(band.h * 0.5)
     out[key].river = {
       w: band.w,
-      h: Math.round(band.h * 0.5),
-      d: river(band.w, Math.round(band.h * 0.5), biome.river),
+      h: rh,
+      bottom: biome.river.bottom,
+      height: biome.river.height,
+      d: river(band.w, rh, biome.river),
     }
   }
 }
@@ -183,15 +195,24 @@ export interface TerrainLayer {
   readonly grammar: 'conifers' | 'grassland' | 'ridge' | 'cloudbank'
   readonly w: number
   readonly h: number
-  /** CSS length the tile is drawn at. Rendered width follows from w/h. */
-  readonly crest: string
+  /** Drawn tile height in vh. Rendered tile width is crest * (w / h). */
+  readonly crest: number
+  /** Baseline position in dvh from the top of the hero. bottom - crest = summit. */
+  readonly bottom: number
+  /** Which rung of the terrain colour ramp this layer takes, 1 near to 4 far. */
+  readonly fill: 1 | 2 | 3 | 4
   readonly commands: number
+  /** Rendered element aspect, height over width. Near 2.8 is a good conifer. */
+  readonly aspect: number | null
   readonly d: string
 }
 
 export interface TerrainWater {
   readonly w: number
   readonly h: number
+  /** Baseline position in dvh, and band height in dvh. */
+  readonly bottom: number
+  readonly height: number
   readonly d: string
 }
 
@@ -226,57 +247,69 @@ if (preview) {
   const dir = resolve(root, '.terrain-preview')
   mkdirSync(dir, { recursive: true })
 
-  // Light-mode tokens, inlined so the preview needs no stylesheet.
-  const FILL = ['#414833', '#656d4a', '#817854', '#bca68d']
+  // Light-mode terrain ramp, inlined so the preview needs no stylesheet.
+  const FILL = { 1: '#414833', 2: '#656d4a', 3: '#817854', 4: '#bca68d' }
   const SKY = ['#f5efe9', '#ede0d4', '#d3c2b0']
-  const W = 1200
-  const H = 460
+
+  // 1 dvh = VH px. The canvas runs past 100dvh so the overhang that covers page
+  // content is visible, with a rule drawn at the fold.
+  const VH = 7
+  const W = 1280
+  const VIEWPORT = 100 * VH
+  const H = 145 * VH
 
   for (const [key, biome] of Object.entries(out)) {
-    // Depth 4 paints first (furthest back), depth 1 last.
-    const bands = [...biome.layers].reverse()
-    const parts = bands.map((l) => {
-      const idx = l.depth - 1
-      // Rendered tile height as a share of the preview, mirroring the CSS crest
-      // ladder so the preview shows the real proportions.
-      const crestPx = H * [0.26, 0.22, 0.18, 0.14][idx] * 1.9
+    const layer = (l) => {
+      const crestPx = l.crest * VH
+      const bottomPx = l.bottom * VH
+      const topPx = bottomPx - crestPx
       const tileW = crestPx * (l.w / l.h)
-      const repeats = Math.ceil(W / tileW) + 1
-      const top = H - crestPx - H * [0.0, 0.03, 0.06, 0.09][idx]
-      const tiles = Array.from({ length: repeats }, (_, r) => {
-        const sx = tileW / l.w
-        const sy = crestPx / l.h
-        return `<g transform="translate(${(r * tileW).toFixed(1)} ${top.toFixed(1)}) scale(${sx.toFixed(4)} ${sy.toFixed(4)})"><path d="${l.d}" fill="${FILL[idx]}"/></g>`
-      }).join('')
-      // A solid body beneath each crest, as the gradient mask layer provides.
-      return `${tiles}<rect x="0" y="${(top + crestPx - 1).toFixed(1)}" width="${W}" height="${(H - top - crestPx + 1).toFixed(1)}" fill="${FILL[idx]}"/>`
-    })
+      const reps = Math.ceil(W / tileW) + 1
+      const sx = tileW / l.w
+      const sy = crestPx / l.h
+      const tiles = Array.from(
+        { length: reps },
+        (_, r) =>
+          `<g transform="translate(${(r * tileW).toFixed(1)} ${topPx.toFixed(1)}) scale(${sx.toFixed(4)} ${sy.toFixed(4)})"><path d="${l.d}" fill="${FILL[l.fill]}"/></g>`,
+      ).join('')
+      // The solid body the gradient mask layer supplies on the real page.
+      const bodyTop = bottomPx - 1
+      return `${tiles}<rect x="0" y="${bodyTop.toFixed(1)}" width="${W}" height="${(H - bodyTop).toFixed(1)}" fill="${FILL[l.fill]}"/>`
+    }
 
-    const river = biome.river
+    const riverEl = biome.river
       ? (() => {
-          const rh = H * 0.1
-          const rw = rh * (biome.river.w / biome.river.h)
-          const reps = Math.ceil(W / rw) + 1
-          const top = H - H * 0.3
-          return Array.from({ length: reps }, (_, r) => {
-            const sx = rw / biome.river.w
-            const sy = rh / biome.river.h
-            return `<g transform="translate(${(r * rw).toFixed(1)} ${top.toFixed(1)}) scale(${sx.toFixed(4)} ${sy.toFixed(4)})"><path d="${biome.river.d}" fill="#9aa88f"/></g>`
-          }).join('')
+          const r = biome.river
+          const bandH = r.height * VH
+          const bandW = bandH * (r.w / r.h)
+          const reps = Math.ceil(W / bandW) + 1
+          const topPx = r.bottom * VH - bandH
+          const sx = bandW / r.w
+          const sy = bandH / r.h
+          return Array.from(
+            { length: reps },
+            (_, i) =>
+              `<g transform="translate(${(i * bandW).toFixed(1)} ${topPx.toFixed(1)}) scale(${sx.toFixed(4)} ${sy.toFixed(4)})"><path d="${r.d}" fill="#9aa88f"/></g>`,
+          ).join('')
         })()
       : ''
 
-    // River sits between depth 3 and depth 2, so splice it in there.
-    const ordered = [parts[0], parts[1], river, parts[2], parts[3]].join('')
+    // Paint far to near. The river slots in just behind the two near bands,
+    // which is where it sits in the real z-order.
+    const byDepth = [...biome.layers].sort((a, b) => b.depth - a.depth)
+    const painted = byDepth.map((l) => ({ depth: l.depth, svg: layer(l) }))
+    const body = painted.map((p) => (p.depth === 2 ? riverEl + p.svg : p.svg)).join('\n')
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0" stop-color="${SKY[0]}"/><stop offset="0.46" stop-color="${SKY[1]}"/><stop offset="1" stop-color="${SKY[2]}"/>
 </linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
-<circle cx="${W * 0.78}" cy="${H * 0.26}" r="${H * 0.13}" fill="#a68a64"/>
-${ordered}
-<text x="16" y="30" font-family="sans-serif" font-size="20" fill="#414833">${biome.label}</text>
+<circle cx="${(W * 0.74).toFixed(0)}" cy="${(30 * VH).toFixed(0)}" r="${(11 * VH).toFixed(0)}" fill="#a68a64"/>
+<text x="72" y="${(30 * VH).toFixed(0)}" font-family="-apple-system,sans-serif" font-size="${(6.5 * VH).toFixed(0)}" font-weight="600" fill="#414833">${biome.label}</text>
+${body}
+<line x1="0" y1="${VIEWPORT}" x2="${W}" y2="${VIEWPORT}" stroke="#8a3b2a" stroke-width="2" stroke-dasharray="10 8"/>
+<text x="8" y="${VIEWPORT - 8}" font-family="-apple-system,sans-serif" font-size="14" fill="#8a3b2a">100dvh fold</text>
 </svg>`
     writeFileSync(resolve(dir, `${key}.svg`), svg, 'utf8')
   }
