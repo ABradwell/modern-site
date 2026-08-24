@@ -276,10 +276,10 @@ it to a major there if a future Node release breaks the build.
 
 Both hostnames are declared in the `domains:` block of `.do/app.yaml`:
 
-| Host                    | Type      | Behaviour                                  |
-| ----------------------- | --------- | ------------------------------------------ |
-| `aidenbradwell.com`     | `PRIMARY` | Serves the site.                           |
-| `www.aidenbradwell.com` | `ALIAS`   | Certificate issued, redirects to the apex. |
+| Host                    | Type      | Behaviour                                    |
+| ----------------------- | --------- | -------------------------------------------- |
+| `aidenbradwell.com`     | `PRIMARY` | Serves the site.                             |
+| `www.aidenbradwell.com` | `ALIAS`   | Certificate issued, serves the same content. |
 
 The nameservers are DigitalOcean's (`ns1`/`ns2`/`ns3.digitalocean.com`), and
 `zone: aidenbradwell.com` on each entry tells App Platform to manage the records
@@ -316,8 +316,24 @@ To verify after a change:
 ```bash
 dig +short aidenbradwell.com www.aidenbradwell.com
 curl -sSI https://aidenbradwell.com     | head -1   # expect 200
-curl -sSI https://www.aidenbradwell.com | head -1   # expect 301 to the apex
+curl -sSI https://www.aidenbradwell.com | head -1   # expect 200
 ```
+
+An `ALIAS` serves the site rather than redirecting to the `PRIMARY`, so `www`
+answers 200 with the same content and no `Location` header. Do not read the
+absence of a 301 as a misconfiguration. What keeps the two hostnames from
+competing as duplicates is the canonical tag, which every page carries and which
+always names the apex:
+
+```bash
+curl -sS https://www.aidenbradwell.com | grep -o '<link rel="canonical"[^>]*>'
+# <link rel="canonical" href="https://aidenbradwell.com/"/>
+```
+
+If a real redirect is ever wanted, App Platform cannot do it from a static-site
+component. It would need an `ingress` rule with a `redirect` on a separate
+component, which is a bigger change than it sounds and is not worth it while the
+canonical tag is doing the job.
 
 Canonical URLs, `sitemap.xml` and `robots.txt` all point at the apex; the source
 of that is `SITE.url` in `src/content/site.ts`. Keep the apex `PRIMARY` so those
