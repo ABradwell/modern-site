@@ -11,9 +11,45 @@ import { SITE } from '@/content/site'
  */
 export const dynamic = 'force-static'
 
+/**
+ * The AI crawlers, named explicitly.
+ *
+ * `User-agent: *` already permits every one of these, so functionally this list
+ * changes nothing today. It is here because a crawler that matches a named
+ * group ignores the `*` group entirely, which makes this the seam where the
+ * answer can differ per agent later, and because the permission is worth
+ * stating rather than defaulting.
+ *
+ * The decision, for the record: this site is a portfolio whose entire job is to
+ * be found and summarised by whoever is looking, and a growing share of that
+ * traffic arrives through an assistant rather than a results page. Blocking the
+ * ingest would be blocking the readership. There is nothing here to protect,
+ * either: every word is published deliberately and none of it is licensed
+ * content. Add an agent to this list with `disallow: '/'` to change the answer
+ * for that one agent without touching the rest.
+ */
+const AI_AGENTS = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-User',
+  'Claude-SearchBot',
+  'PerplexityBot',
+  'Perplexity-User',
+  'Google-Extended',
+  'Applebot-Extended',
+  'CCBot',
+  'Bytespider',
+  'meta-externalagent',
+] as const
+
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: '/' }],
+    rules: [
+      { userAgent: '*', allow: '/' },
+      { userAgent: [...AI_AGENTS], allow: '/' },
+    ],
     sitemap: new URL('/sitemap.xml', SITE.url).toString(),
   }
 }

@@ -5,15 +5,22 @@ import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
+import { JsonLd } from '@/components/system/json-ld'
 import { Reveal } from '@/components/system/reveal'
 import { PROJECTS } from '@/content/projects'
+import { SITE } from '@/content/site'
 import { SKILL_BY_ID } from '@/content/skills'
+import { projectsGraph } from '@/lib/schema'
 import { CHIP, META, PROSE_TIGHT } from '@/lib/type'
 
 export const metadata: Metadata = {
   title: 'Projects',
   description:
     'Five projects, from a music player built in 2025 back through convolutional networks, webcam processing and a clinic simulation.',
+  // See the note in skills/page.tsx. Inherited canonicals pointed every station
+  // at the homepage.
+  alternates: { canonical: '/projects/' },
+  openGraph: { url: new URL('/projects/', SITE.url).toString() },
 }
 
 /**
@@ -30,6 +37,8 @@ export const metadata: Metadata = {
 export default function ProjectsPage() {
   return (
     <>
+      <JsonLd data={projectsGraph} />
+
       <StationHero>
         <h1
           id="station-title"

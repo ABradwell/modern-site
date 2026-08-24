@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
@@ -8,8 +9,20 @@ import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
+import { JsonLd } from '@/components/system/json-ld'
 import { ABOUT, HERO_SUBTEXT, SITE } from '@/content/site'
+import { homeGraph } from '@/lib/schema'
 import { PROSE } from '@/lib/type'
+
+/**
+ * Canonical and og:url are declared per page, not in the root layout. A
+ * canonical inherited from the layout pointed all four routes at the homepage.
+ * See the note in layout.tsx.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+  openGraph: { url: SITE.url },
+}
 
 /**
  * The landing page. Three layout families below the hero, none repeated: a
@@ -24,6 +37,8 @@ import { PROSE } from '@/lib/type'
 export default function HomePage() {
   return (
     <>
+      <JsonLd data={homeGraph} />
+
       <StationHero>
         <h1
           id="station-title"
