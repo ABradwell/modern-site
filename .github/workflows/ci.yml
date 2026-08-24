@@ -36,3 +36,27 @@ jobs:
       - run: git diff --exit-code src/content/terrain.generated.ts
 
       - run: pnpm build
+
+  # The pre-push hook doing this same check lives in the working tree, so it can
+  # be skipped with --no-verify. This job is the copy that cannot be, and it is a
+  # required check on main. Kept separate from `verify` so it stays fast and does
+  # not depend on an install succeeding. See "Commit identity" in the README.
+  identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Every commit is authored by the repository owner
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # A brand new branch, or a force push, reports a base that is not a
+          # commit. There is no range to walk in that case, so check the tip.
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            sh scripts/git-identity-guard.sh range "$BASE..$HEAD_SHA"
+          else
+            sh scripts/git-identity-guard.sh range -1 "$HEAD_SHA"
+          fi
