@@ -39,3 +39,38 @@ export function formatMonth(iso: string): string {
 export function range(start: string, end: string | null): string {
   return `${formatMonth(start)} - ${end ? formatMonth(end) : PRESENT}`
 }
+
+/**
+ * Whole months from an ISO YYYY-MM to now.
+ *
+ * `now` is injected so the progression rail's terminus is a pure function of
+ * its inputs and can be reasoned about. In the app it is left to default, which
+ * on a statically exported page means the span is fixed at build time. That is
+ * the right trade here: the alternative is a client component recomputing a
+ * number that moves once a month, and the site rebuilds far more often than
+ * that.
+ */
+export function monthsSince(iso: string, now: Date = new Date()): number {
+  const [year, month] = iso.split('-')
+  const years = now.getFullYear() - Number(year)
+  return Math.max(0, years * 12 + (now.getMonth() + 1 - Number(month)))
+}
+
+/**
+ * "8 months", "1 year", "1 year 6 months".
+ *
+ * Months all the way up to a year, then years and months, because "19 months"
+ * is a number a reader has to divide and "1 year 7 months" is one they read.
+ */
+export function formatSpan(months: number): string {
+  const years = Math.floor(months / 12)
+  const rest = months % 12
+
+  if (years === 0) return plural(rest, 'month')
+  if (rest === 0) return plural(years, 'year')
+  return `${plural(years, 'year')} ${plural(rest, 'month')}`
+}
+
+function plural(count: number, unit: string): string {
+  return `${count} ${unit}${count === 1 ? '' : 's'}`
+}
