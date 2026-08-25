@@ -13,6 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { RoleDeliveries } from '@/components/sections/RoleDeliveries'
 import { RoleProgression } from '@/components/sections/RoleProgression'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
 import { SITE } from '@/content/site'
@@ -194,26 +195,38 @@ export default function ExperiencePage() {
                   ) : null}
 
                   {/*
+                    Deliveries or highlights, never both. A long tenure earns
+                    the programme list; a four-month placement is honestly three
+                    bullets and would look inflated dressed as anything more.
+                    See the note on Role.highlights in content/types.ts.
+                  */}
+                  {role.deliveries ? (
+                    <RoleDeliveries items={role.deliveries} className="mt-9" />
+                  ) : null}
+
+                  {/*
                     A marked list, because an unmarked one is not read as a list.
                     These were three blocks each carrying a left hairline, which
                     is the pull-quote pattern: it said "three separate asides",
                     not "three items of one set". A dot per item and a tighter
                     gap between them says the opposite.
                   */}
-                  <ul className="mt-9 max-w-[64ch] space-y-2.5">
-                    {role.highlights.map((highlight) => (
-                      <li
-                        key={highlight}
-                        className={`grid grid-cols-[0.5rem_1fr] gap-x-4 ${PROSE_TIGHT} text-muted-foreground`}
-                      >
-                        <span
-                          aria-hidden
-                          className="mt-[0.6em] size-1.5 rounded-full bg-foreground/40"
-                        />
-                        <span>{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {role.highlights ? (
+                    <ul className="mt-9 max-w-[64ch] space-y-2.5">
+                      {role.highlights.map((highlight) => (
+                        <li
+                          key={highlight}
+                          className={`grid grid-cols-[0.5rem_1fr] gap-x-4 ${PROSE_TIGHT} text-muted-foreground`}
+                        >
+                          <span
+                            aria-hidden
+                            className="mt-[0.6em] size-1.5 rounded-full bg-foreground/40"
+                          />
+                          <span>{highlight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
 
                   {/*
                     Ruled off, so the stack reads as the card's metadata rather
