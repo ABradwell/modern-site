@@ -26,6 +26,7 @@ export const SKILLS = [
   { id: 'go', name: 'Go', icon: 'SiGo', category: 'languages', tier: 1 },
   { id: 'swift', name: 'Swift', icon: 'SiSwift', category: 'languages', tier: 1 },
   { id: 'cpp', name: 'C++', icon: 'SiCplusplus', category: 'languages', tier: 1 },
+  { id: 'kotlin', name: 'Kotlin', icon: 'SiKotlin', category: 'languages', tier: 2 },
   { id: 'tcl', name: 'Tcl', icon: null, category: 'languages', tier: 2 },
   { id: 'ocaml', name: 'OCaml', icon: null, category: 'languages', tier: 2 },
   { id: 'prolog', name: 'Prolog', icon: null, category: 'languages', tier: 2 },
@@ -41,6 +42,11 @@ export const SKILLS = [
   { id: 'dynamodb', name: 'DynamoDB', icon: null, category: 'cloud', tier: 1 },
   { id: 's3', name: 'S3', icon: null, category: 'cloud', tier: 1 },
   { id: 'sagemaker', name: 'SageMaker', icon: null, category: 'cloud', tier: 1 },
+  { id: 'eks', name: 'EKS', icon: null, category: 'cloud', tier: 1 },
+  { id: 'rds', name: 'RDS', icon: null, category: 'cloud', tier: 1 },
+  { id: 'athena', name: 'Athena', icon: null, category: 'cloud', tier: 1 },
+  { id: 'iam', name: 'IAM', icon: null, category: 'cloud', tier: 1 },
+  { id: 'vpc', name: 'VPC / PrivateLink', icon: null, category: 'cloud', tier: 1 },
   { id: 'api-gateway', name: 'API Gateway', icon: null, category: 'cloud', tier: 2 },
   { id: 'ecr', name: 'ECR', icon: null, category: 'cloud', tier: 2 },
   { id: 'sns', name: 'SNS', icon: null, category: 'cloud', tier: 2 },
@@ -55,6 +61,11 @@ export const SKILLS = [
   },
   { id: 'mysql', name: 'MySQL', icon: 'SiMysql', category: 'data', tier: 1 },
   { id: 'firebase', name: 'Firebase', icon: 'SiFirebase', category: 'data', tier: 1 },
+  // Iceberg's mark is not in Simple Icons, so it runs in the type register
+  // alongside the AWS services rather than waiting for a logo that may never
+  // lawfully arrive.
+  { id: 'iceberg', name: 'Iceberg', icon: null, category: 'data', tier: 1 },
+  { id: 'data-lakes', name: 'Data lakes', icon: null, category: 'data', tier: 1 },
 
   // --- infrastructure -------------------------------------------------------
   {
@@ -64,7 +75,16 @@ export const SKILLS = [
     category: 'infrastructure',
     tier: 1,
   },
+  { id: 'cdktf', name: 'CDKTF', icon: null, category: 'infrastructure', tier: 1 },
+  { id: 'sst', name: 'SST', icon: 'SiSst', category: 'infrastructure', tier: 1 },
   { id: 'docker', name: 'Docker', icon: 'SiDocker', category: 'infrastructure', tier: 1 },
+  {
+    id: 'kubernetes',
+    name: 'Kubernetes',
+    icon: 'SiKubernetes',
+    category: 'infrastructure',
+    tier: 1,
+  },
   { id: 'git', name: 'Git', icon: 'SiGit', category: 'infrastructure', tier: 1 },
   { id: 'linux', name: 'Linux', icon: 'SiLinux', category: 'infrastructure', tier: 1 },
   {
@@ -110,6 +130,9 @@ export const SKILLS = [
     tier: 1,
   },
   { id: 'vite', name: 'Vite', icon: 'SiVite', category: 'frameworks', tier: 1 },
+  { id: 'fastapi', name: 'FastAPI', icon: 'SiFastapi', category: 'frameworks', tier: 1 },
+  { id: 'flink', name: 'Flink', icon: 'SiApacheflink', category: 'frameworks', tier: 1 },
+  { id: 'kafka', name: 'Kafka', icon: 'SiApachekafka', category: 'frameworks', tier: 1 },
   { id: 'express', name: 'Express', icon: 'SiExpress', category: 'frameworks', tier: 2 },
   {
     id: 'robot-framework',
