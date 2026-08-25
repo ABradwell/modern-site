@@ -398,6 +398,31 @@ turns the warning into a failed commit. Hence `--no-warn-ignored` on the ESLint
 command in `package.json`. Remove it and every commit that touches
 `src/content/terrain.generated.ts` fails for no real reason.
 
+## Secret scanning
+
+`gitleaks` runs over the staged diff before every commit, called from
+`.husky/pre-commit` through `scripts/gitleaks-guard.sh`.
+
+```sh
+brew install gitleaks
+```
+
+It scans the index, not the working tree, and that distinction is load-bearing
+here rather than a performance choice. A dev build writes real signing keys into
+`.next/prerender-manifest.json` and its siblings, so a working-tree scan reports
+28 findings in ignored output that no commit could ever contain. Scanning the
+index reports exactly what the commit will carry.
+
+The hook fails closed. Without `gitleaks` on PATH the commit is refused rather
+than passed through unchecked, on the same reasoning as the identity guard below:
+a gate that silently stops working is worse than no gate, because you stop
+watching for the mistake it was meant to catch.
+
+When a finding is a false positive, mark the line rather than reaching for
+`--no-verify`, which skips the identity guard and `lint-staged` too. Either
+append `gitleaks:allow` as a comment on the line, or add the fingerprint the hook
+printed to `.gitleaksignore`.
+
 ## Commit identity
 
 Every commit here is authored by `Aiden Stevenson Bradwell
