@@ -397,3 +397,35 @@ configured to ignore. ESLint reports those as a warning, and `--max-warnings=0`
 turns the warning into a failed commit. Hence `--no-warn-ignored` on the ESLint
 command in `package.json`. Remove it and every commit that touches
 `src/content/terrain.generated.ts` fails for no real reason.
+
+## Commit identity
+
+Every commit here is authored by `Aiden Stevenson Bradwell
+<Aidenbradwell@gmail.com>`, the account that owns the repository. That is a firm
+rule, not a preference, and it is enforced rather than remembered.
+
+The failure it exists to prevent is quiet. This machine's global git identity is
+a work address, so without a local override the work address wins by default. The
+commit lands, the name on it is still right, and only the email is wrong, which
+means nothing looks broken until GitHub attributes the work to nobody. Undoing it
+is a history rewrite plus a force push across every branch.
+
+Three layers, because each catches what the one before it misses:
+
+- `git config --local user.email` in this clone. All worktrees share one config
+  file, so setting it once covers every worktree.
+- `scripts/git-identity-guard.sh`, called from `.husky/pre-commit` before the
+  commit object is created, and again from `.husky/pre-push` over the commits a
+  push would actually send. The second call catches what got in around the first:
+  a rebase, a cherry-pick out of a work repository, a commit made with
+  `--no-verify`.
+- The `identity` job in `.github/workflows/ci.yml`, a required check on the
+  `protect-main-at-all-costs` ruleset. Hooks live in the working tree and can be
+  skipped with `--no-verify`. A required check cannot, so nothing reaches main
+  without passing it. GitHub's own `commit_author_email_pattern` ruleset rule
+  would be the tidier way to say this, but commit metadata rules are not
+  available on this repository's plan.
+
+GitHub is the committer on merge commits it creates itself when a pull request is
+merged in the web UI. The guard allows that as committer only. The author on those
+commits is already the account owner.

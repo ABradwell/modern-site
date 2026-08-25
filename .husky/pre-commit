@@ -1,1 +1,2 @@
+sh scripts/git-identity-guard.sh pending
 pnpm lint-staged
