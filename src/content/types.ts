@@ -56,6 +56,45 @@ export interface Milestone {
   readonly note?: string
 }
 
+/**
+ * One substantial thing delivered inside a role.
+ *
+ * WHY THIS EXISTS AT ALL. A role held for years across several pivots does not
+ * compress into three bullets without lying by omission: the bullets end up
+ * naming technologies rather than work, and every one of them reads at the same
+ * weight, so a reader cannot tell a fortnight's task from a year's programme.
+ * A delivery is the unit that survives that compression. It has a shape, a
+ * reason it was needed, and one discipline it is on the page to evidence.
+ *
+ * `discipline` is the load-bearing field. Deliveries are chosen so that no two
+ * share one, which is what stops the list becoming several accounts of one
+ * skill set in different words.
+ */
+export interface Delivery {
+  readonly id: string
+  readonly name: string
+  /**
+   * The core skill set this delivery evidences. Two or three words, and unique
+   * across the role's deliveries. If two of them want the same discipline, the
+   * honest fix is to merge them, not to find a synonym.
+   */
+  readonly discipline: string
+  /** The takeaway, in one sentence. Read on its own by anyone scanning. */
+  readonly summary: string
+  /** What was actually built. One paragraph, no bullets. */
+  readonly detail: string
+  /**
+   * Display names, NOT skill ids.
+   *
+   * Deliberately a different field from `Role.stack`, which is keyed to the
+   * competency wall. Most of what a delivery is built with is specific tooling
+   * that has no business on a wall of core competencies, and forcing those
+   * through the registry would either pollute it or render raw ids at the
+   * reader.
+   */
+  readonly tools: readonly string[]
+}
+
 export interface Role {
   readonly company: string
   readonly title: string
@@ -64,8 +103,17 @@ export interface Role {
   readonly end: string | null
   readonly location: string
   readonly summary: string
-  /** Two to four. Ruthlessly cut, because nobody reads the fifth. */
-  readonly highlights: readonly string[]
+  /**
+   * Two to four. Ruthlessly cut, because nobody reads the fifth.
+   *
+   * Optional, because a role carries either these or `deliveries`, never both.
+   * Bullets are the right form for a placement measured in months; they are the
+   * wrong form for a tenure long enough to have delivered distinct programmes,
+   * and rendering both would say the same work twice at two different weights.
+   */
+  readonly highlights?: readonly string[]
+  /** The long-tenure alternative to `highlights`. See the note there. */
+  readonly deliveries?: readonly Delivery[]
   readonly stack: readonly string[]
   readonly logo?: { readonly src: string; readonly alt: string }
   /**

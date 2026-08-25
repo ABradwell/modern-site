@@ -104,7 +104,32 @@ export async function GET() {
       '',
     )
 
-    push(...role.highlights.map((h) => `- ${h}`), '')
+    /*
+      Deliveries or highlights, mirroring the page. A reader here is a model
+      summarising the role, so the deliveries are rendered in full rather than
+      flattened to their names: the discipline and the detail are the parts that
+      distinguish distinct programmes from restatements of "full-stack", and
+      dropping them would hand the summariser exactly the bullet list the page
+      deliberately stopped being.
+    */
+    if (role.deliveries) {
+      for (const delivery of role.deliveries) {
+        push(
+          `#### ${delivery.name}`,
+          '',
+          `Discipline: ${delivery.discipline}.`,
+          '',
+          delivery.summary,
+          '',
+          delivery.detail,
+          '',
+          `Built with: ${delivery.tools.join(', ')}.`,
+          '',
+        )
+      }
+    }
+
+    if (role.highlights) push(...role.highlights.map((h) => `- ${h}`), '')
     push(`Core stack: ${named(role.stack)}.`, '')
   }
 
