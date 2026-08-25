@@ -82,6 +82,31 @@ export default function ExperiencePage() {
       </StationHero>
 
       <StationContent>
+        <Section id="competencies" title="Core competencies">
+          <div className="divide-y divide-border">
+            {WALL_GROUPS.map((group, gi) => {
+              const items = skillsIn(group.key, 1)
+              if (items.length === 0) return null
+              return (
+                <Reveal key={group.key} index={gi} className="block">
+                  <div className="grid gap-4 py-8 md:grid-cols-[10rem_1fr] md:gap-8 md:py-10">
+                    <h3 className="pt-2 text-base font-medium text-foreground">
+                      {group.label}
+                    </h3>
+                    <ul className="flex flex-wrap items-center gap-2">
+                      {items.map((skill) => (
+                        <li key={skill.id}>
+                          <BrandMark skill={skill} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </Section>
+
         <Section id="roles" title="Roles">
           {/* Radix Accordion by way of shadcn. The keyboard handling, the
               aria-expanded wiring and the height animation are all worth not
@@ -228,31 +253,6 @@ export default function ExperiencePage() {
               ))}
             </ul>
           </Reveal>
-        </Section>
-
-        <Section id="competencies" title="Core competencies">
-          <div className="divide-y divide-border">
-            {WALL_GROUPS.map((group, gi) => {
-              const items = skillsIn(group.key, 1)
-              if (items.length === 0) return null
-              return (
-                <Reveal key={group.key} index={gi} className="block">
-                  <div className="grid gap-4 py-8 md:grid-cols-[10rem_1fr] md:gap-8 md:py-10">
-                    <h3 className="pt-2 text-base font-medium text-foreground">
-                      {group.label}
-                    </h3>
-                    <ul className="flex flex-wrap items-center gap-2">
-                      {items.map((skill) => (
-                        <li key={skill.id}>
-                          <BrandMark skill={skill} />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
         </Section>
 
         {/* A measured list rather than more pills, so the page does not present
