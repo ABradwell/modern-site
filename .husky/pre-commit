@@ -1,2 +1,6 @@
 sh scripts/git-identity-guard.sh pending
+
+# Secrets before lint-staged, so a refused commit leaves staged files untouched.
+sh scripts/gitleaks-guard.sh
+
 pnpm lint-staged
