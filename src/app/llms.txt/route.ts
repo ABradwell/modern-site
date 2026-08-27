@@ -1,7 +1,7 @@
 import { ARTICLES } from '@/content/articles'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
 import { PROJECTS } from '@/content/projects'
-import { ABOUT, SITE } from '@/content/site'
+import { ABOUT, CV_PDF, SITE } from '@/content/site'
 import {
   SKILLS,
   SKILL_BY_ID,
@@ -89,6 +89,7 @@ export async function GET() {
     '## Pages',
     '',
     ...STATIONS.map((s) => `- [${s.label}](${url(s.href)})`),
+    `- [CV](${url('/cv')}), also as a PDF: ${new URL(CV_PDF, SITE.url).toString()}`,
     '',
     `## Experience ([full detail](${url('/skills')}))`,
     '',

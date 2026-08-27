@@ -56,6 +56,12 @@ const required = [
     true,
   ],
   ['out/icon.svg', 'favicon'],
+  // Off the trail on purpose, so not covered by the STATIONS loop below.
+  ['out/cv/index.html', 'the CV page, which is deliberately absent from STATIONS'],
+  [
+    'out/aiden-stevenson-bradwell-cv.pdf',
+    'the resume PDF the Experience hero and the CV page link to, copied from public/',
+  ],
 ]
 
 // Every station must have produced a real HTML document, at the directory-index
