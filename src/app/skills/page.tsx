@@ -1,3 +1,4 @@
+import { DownloadSimple } from '@phosphor-icons/react/dist/ssr'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 
@@ -16,7 +17,7 @@ import {
 import { RoleDeliveries } from '@/components/sections/RoleDeliveries'
 import { RoleProgression } from '@/components/sections/RoleProgression'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
-import { SITE } from '@/content/site'
+import { CV_PDF, SITE } from '@/content/site'
 import { SKILLS, SKILL_BY_ID, WALL_GROUPS, skillsIn } from '@/content/skills'
 import { range } from '@/lib/dates'
 import { experienceGraph } from '@/lib/schema'
@@ -78,6 +79,24 @@ export default function ExperiencePage() {
           Moving to the UK in 2023, my initial stomping ground was working at the spoons
           in Burton upon Trent. Funnily enough, that job didn&apos;t make the list below.
         </p>
+
+        {/*
+          Opens the PDF in a new tab rather than forcing a download: the reader
+          gets the browser's viewer and its own save control, and the page they
+          came from stays put. No `download` attribute for that reason. The file
+          is a plain asset in public/, so this is a link and needs no JS.
+        */}
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <a
+            href={CV_PDF}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-2 rounded-ctl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none"
+          >
+            Download resume
+            <DownloadSimple className="size-4" weight="regular" aria-hidden />
+          </a>
+        </div>
 
         <ScrollCue href="#roles" />
       </StationHero>

@@ -39,3 +39,10 @@ export const ABOUT = [
   "These opportunities included SDK development, OAuth-compliant development, Flink/Kafka pipelines, OpenAPI & OWASP security compliance, Dashboards & Interfaces, and a range of ML-Ops operations. I have helped oversee our company's transition into a fully AI-powered development team, while championing modern engineering mindsets and the shift from ticket-focused to outcome-focused.",
   "Away from work I write and perform music (it's deceptively sad, don't google it), boulder (classic tech bro behaviour), and read. Appreciate you stopping by the site, please do reach out on LinkedIn!",
 ] as const
+
+/**
+ * The resume as a file. Lives in public/ so it ships as a plain asset at the
+ * site root, and is named here once so the Experience hero button, the CV page
+ * and the build gate cannot disagree on where it is.
+ */
+export const CV_PDF = '/aiden-stevenson-bradwell-cv.pdf'
