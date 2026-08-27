@@ -46,3 +46,15 @@ export const ABOUT = [
  * and the build gate cannot disagree on where it is.
  */
 export const CV_PDF = '/aiden-stevenson-bradwell-cv.pdf'
+
+/**
+ * The CV's opening paragraph, in the owner's own voice.
+ *
+ * Deliberately not ABOUT[0]. That paragraph is written for a visitor browsing a
+ * portfolio and opens on where the person lives; this one is written for someone
+ * holding a CV and opens on what they are. Two readers, two openings, and
+ * neither is a lossy copy of the other. It closes by inviting contact, which is
+ * the one thing a CV is for and the homepage is not.
+ */
+export const CV_INTRO =
+  'My name is Aiden Stevenson Bradwell, an AI-powered senior software engineer with firm interests in project ownership, team empowerment, system modernization, and cloud architecture. I am a firm embracer of the modern development flow, and believe you can prioritise automation without losing great design nor great people. I am a massive champion for the SST IaC language. Thanks for taking the time, and please don\u2019t hesitate to reach out if you\u2019re interested in working together. Cheers!'
