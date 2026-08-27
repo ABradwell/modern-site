@@ -108,6 +108,86 @@ export const ROLES: readonly Role[] = [
         ],
       },
     ],
+    /**
+     * The CV's cut of this tenure, by discipline. Authored from the owner's own
+     * list of responsibilities rather than derived from the deliveries above,
+     * and rendered only on /cv. See ResponsibilityArea in content/types.ts for
+     * why both forms exist.
+     *
+     * ORDER IS AUTHORED. Security first because it is the through-line of the
+     * last two years, and the two areas that predate the pivot close it out.
+     */
+    responsibilities: [
+      {
+        area: 'Security engineering',
+        items: [
+          'Leveraged CI/CD pipelines to design and implement an organization-wide security suite (Trivy, CVE automation, SBOMs, injection protection)',
+          'Assured least privilege both within our codebases and through our AWS IAM management suite',
+          'Developed Slack integrations to facilitate just-in-time AWS permission set requests',
+          'Assured OWASP standards through automation, continuous mentorship and the creation of nightly regression harnesses',
+        ],
+      },
+      {
+        area: 'Full-stack Node development',
+        items: [
+          'Oversaw and implemented modern React dashboards, leveraging Node.js, shadcn/ui and the SST IaC language',
+          'Developed secure APIs utilizing OpenAPI documentation and automated drift detection',
+          'Developed and maintained Postgres databases through AWS RDS, utilizing the Drizzle ORM',
+        ],
+      },
+      {
+        area: 'Cloud infrastructure',
+        items: [
+          'Developed an IaC system which allows for pull request validation in isolated environments',
+          'Leading architecture design decisions on foundational system flows and functionalities',
+          "Created and maintained the team's internal observability and tools platform",
+          'Translated non-functional requirements into actionable tickets and system designs',
+          'Extensive hands-on experience in both serverless and Kubernetes environments across the AWS suite (Lambda, EKS, ECR, DynamoDB, RDS, Cognito)',
+        ],
+      },
+      {
+        area: 'Data engineering',
+        items: [
+          'Architected and implemented modern scalable data pipelines (Kafka and Flink), reaching across AWS account boundaries',
+          "Implemented Apache Iceberg data lakes utilizing AWS's Glue Schema Registry and S3 storage",
+          'Many-files compression and data tampering detection, added through a collection of Airflow DAGs deployed within EKS',
+          'Increased pipeline throughput fifty-fold and assured performance through custom stress and load testing harnesses, feeding into our Grafana dashboards',
+        ],
+      },
+      {
+        area: 'Team leadership',
+        items: [
+          'Facilitated one-to-ones to assure our team was both challenged and engaged',
+          'Maintained internal skills matrices and conducted reviews to find growth areas',
+          'Maintained coding standards across our production codebases and release lifecycle',
+        ],
+      },
+      {
+        area: 'Investment and client pitching',
+        items: [
+          'Oversaw the development of demo apps and environments to secure funding',
+          'Engaged with investors on our core technologies and team methodologies',
+          'Spoken within the Manchester tech community, championing AI for human betterment',
+        ],
+      },
+      {
+        area: 'Authentication engineering',
+        items: [
+          'Developed and managed the Keycloak stack for user federation and dashboard RBAC',
+          'Developed a client-facing SSE connection system for B2B client integration flows',
+          'Architected and implemented third-party OAuth token integrations',
+        ],
+      },
+      {
+        area: 'App and SDK development',
+        items: [
+          'Developed a cross-platform password management autofilling app with iOS extensions',
+          'Developed custom WordPress authentication flows, with app handshaking for third-party authentication',
+          'Developed third-party iOS native SDKs for biometric sensor collection',
+          'Developed, and facilitated data collection from, a host of apps across the Swift, Kotlin and React Native / Expo development suite',
+        ],
+      },
+    ],
     stack: [
       'aws',
       'cognito',

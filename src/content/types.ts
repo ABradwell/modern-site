@@ -95,6 +95,26 @@ export interface Delivery {
   readonly tools: readonly string[]
 }
 
+/**
+ * One discipline held inside a role, and the responsibilities under it.
+ *
+ * THE CV'S UNIT, where `Delivery` is the Experience page's. A delivery is one
+ * named programme argued in a paragraph, which is right for a page a reader has
+ * chosen to explore. A responsibility area is the same tenure cut the other way:
+ * what the person is accountable for, in the compressed register a CV is read
+ * in. Both are true, so both exist rather than one being a lossy render of the
+ * other, and each page uses the one its reader came for.
+ *
+ * `area` is sentence case and unique across the role, on the same reasoning as
+ * `Delivery.discipline`: two areas wanting the same label means they are one
+ * area, and the honest fix is to merge them rather than to find a synonym.
+ */
+export interface ResponsibilityArea {
+  readonly area: string
+  /** One line each, no trailing full stop. Scanned far more often than read. */
+  readonly items: readonly string[]
+}
+
 export interface Role {
   readonly company: string
   readonly title: string
@@ -114,6 +134,14 @@ export interface Role {
   readonly highlights?: readonly string[]
   /** The long-tenure alternative to `highlights`. See the note there. */
   readonly deliveries?: readonly Delivery[]
+  /**
+   * The CV's view of the same tenure, by discipline. See ResponsibilityArea.
+   *
+   * A role carries this in addition to `deliveries`, not instead of it: the two
+   * are different cuts of one tenure for two different readers. Absent on the
+   * short placements, which have `highlights` and need no third form.
+   */
+  readonly responsibilities?: readonly ResponsibilityArea[]
   readonly stack: readonly string[]
   readonly logo?: { readonly src: string; readonly alt: string }
   /**
