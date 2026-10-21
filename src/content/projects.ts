@@ -17,7 +17,8 @@ export const PROJECTS: readonly Project[] = [
     detail:
       'Built for Luke, who records, mixes and masters for artists across the North West. It is a static Next.js export with a filterable wall of credits, a showreel and an enquiry form. Every credit lives in one typed module, so adding a session is a single edit that also updates the search data.',
     stack: ['typescript', 'react'],
-    live: 'https://stanilandaudio.co.uk',
+    // Staging URL until stanilandaudio.co.uk is live.
+    live: 'https://staniland-audio-co-uk-stg-cow8t.ondigitalocean.app',
     image: {
       src: '/images/projects/staniland-audio.jpg',
       alt: 'The Staniland Audio homepage, with Luke Staniland at a mixing desk during a live session',
