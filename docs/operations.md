@@ -21,39 +21,39 @@ the local hooks when Git is available.
 
 ## Commands
 
-| Command                              | What it does                                                      |
-| ------------------------------------ | ----------------------------------------------------------------- |
-| `pnpm dev`                           | Next development server                                           |
-| `pnpm build`                         | `next build` with static export, then `scripts/verify-export.mjs` |
-| `pnpm preview`                       | Build, then serve `out/` with `serve`                             |
-| `pnpm typecheck`                     | `tsc --noEmit`                                                    |
-| `pnpm lint`                          | ESLint over the repository                                        |
-| `pnpm lint:fix`                      | ESLint with fixes                                                 |
-| `pnpm format`                        | Prettier write                                                    |
-| `pnpm format:check`                  | Prettier check                                                    |
-| `pnpm verify`                        | Typecheck, lint, format check                                     |
-| `pnpm terrain`                       | Regenerate and validate terrain                                   |
-| `pnpm terrain -- --preview`          | Regenerate and write contact-sheet SVGs                           |
-| `node scripts/check-contrast.mjs`    | Assert contrast pairs and terrain ramp                            |
-| `node scripts/generate-og.mjs`       | Regenerate the committed social card                              |
-| `sh scripts/git-identity-guard.sh …` | Identity guard; normally run by hooks                             |
-| `sh scripts/gitleaks-guard.sh`       | Staged secret scan; normally run by the pre-commit hook           |
+| Command                              | What it does                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `pnpm dev`                           | Next development server                                                               |
+| `pnpm build`                         | `next build` with static export, then `scripts/verify-export.mjs`                     |
+| `pnpm preview`                       | Build, then serve `out/` with `serve`                                                 |
+| `pnpm typecheck`                     | `tsc --noEmit`                                                                        |
+| `pnpm lint`                          | ESLint over the repository                                                            |
+| `pnpm lint:fix`                      | ESLint with fixes                                                                     |
+| `pnpm format`                        | Prettier write                                                                        |
+| `pnpm format:check`                  | Prettier check                                                                        |
+| `pnpm verify`                        | Typecheck, lint, format check                                                         |
+| `pnpm terrain`                       | Regenerate and validate the panorama                                                  |
+| `pnpm terrain -- --preview`          | Also write `.terrain-preview/`: the panorama, plus a laptop and phone SVG per station |
+| `node scripts/check-contrast.mjs`    | Assert contrast pairs and terrain ramp                                                |
+| `node scripts/generate-og.mjs`       | Regenerate the committed social card from the panorama's Home window                  |
+| `sh scripts/git-identity-guard.sh …` | Identity guard; normally run by hooks                                                 |
+| `sh scripts/gitleaks-guard.sh`       | Staged secret scan; normally run by the pre-commit hook                               |
 
 There is no unit or integration test suite. Verification is static analysis plus
 the build and export assertions.
 
 ## What to run for a change
 
-| Change                    | Minimum check                                                               |
-| ------------------------- | --------------------------------------------------------------------------- |
-| Prose or content data     | `pnpm typecheck`, then `pnpm build` if a page/export artefact changed       |
-| Component or page layout  | `pnpm verify`, `pnpm build`                                                 |
-| Colour or token           | `pnpm verify`, `node scripts/check-contrast.mjs`, `pnpm build`              |
-| Terrain config or grammar | `pnpm terrain`, review the diff, `pnpm build`                               |
-| Motion / station geometry | `pnpm verify`, `pnpm build`, manual desktop and touch check                 |
-| Route or metadata         | `pnpm verify`, `pnpm build`; inspect the relevant `out/` file               |
-| CSP or headers            | `pnpm build`; the export gate compares all three copies                     |
-| Docs only                 | `pnpm format:check` at minimum; `pnpm verify` if dependencies are installed |
+| Change                    | Minimum check                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Prose or content data     | `pnpm typecheck`, then `pnpm build` if a page/export artefact changed                                                              |
+| Component or page layout  | `pnpm verify`, `pnpm build`                                                                                                        |
+| Colour or token           | `pnpm verify`, `node scripts/check-contrast.mjs`, `pnpm build`                                                                     |
+| Terrain config or grammar | `pnpm terrain -- --preview`, review the diff and previews, `pnpm build`; `node scripts/generate-og.mjs` if the Home window changed |
+| Motion / station geometry | `pnpm verify`, `pnpm build`, manual desktop and touch check                                                                        |
+| Route or metadata         | `pnpm verify`, `pnpm build`; inspect the relevant `out/` file                                                                      |
+| CSP or headers            | `pnpm build`; the export gate compares all three copies                                                                            |
+| Docs only                 | `pnpm format:check` at minimum; `pnpm verify` if dependencies are installed                                                        |
 
 The build gate is not optional for deployment-sensitive work. `pnpm dev` can pass
 while `out/` is missing a required file.
@@ -309,7 +309,9 @@ rewrite as the primary fix.
 
 ### Terrain check fails in CI
 
-The committed `terrain.generated.ts` is stale. Run:
+The committed `terrain.generated.ts` is stale, or a generator check failed (the
+log names it: floor between rows, recession, near ground line, `NEAR_TOP`,
+water placement, symbol bounds or a self-intersection). Run:
 
 ```bash
 pnpm terrain
@@ -318,6 +320,13 @@ git diff -- src/content/terrain.generated.ts
 ```
 
 Commit the regenerated file. Do not hand-edit it to make the diff go away.
+
+### "terrain is …vw wide but stations span …vw"
+
+`Landscape.tsx` throws this at module load when `PANORAMA.stripVw` differs from
+`STRIP_VW`. The station list changed length without the route being extended.
+Update `ROWS` (and `WATER`) in `scripts/lib/terrain-config.mjs` to cover the
+new strip and run `pnpm terrain`.
 
 ### CSP drift
 

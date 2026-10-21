@@ -28,20 +28,20 @@ HTML; there is no server, database, CMS, authentication or runtime API.
 
 ## Current route shape
 
-| Route       | Nav label  | Biome                       | Role                                          |
-| ----------- | ---------- | --------------------------- | --------------------------------------------- |
-| `/`         | Home       | forest                      | Landing page and contact                      |
-| `/skills`   | Experience | plains                      | Roles, competencies and education in one page |
-| `/projects` | Projects   | mountains                   | Six projects in grouped tabs                  |
-| `/articles` | Writing    | above cloud line            | Two externally published pieces               |
-| `/cv`       | none       | forest (off-trail fallback) | CV as HTML; not a station                     |
+| Route       | Nav label  | Place on the trail                    | Role                                          |
+| ----------- | ---------- | ------------------------------------- | --------------------------------------------- |
+| `/`         | Home       | deep woods                            | Landing page and contact                      |
+| `/skills`   | Experience | the woods' edge, a meadow and a river | Roles, competencies and education in one page |
+| `/projects` | Projects   | a lake at the foot of the mountains   | Six projects in grouped tabs                  |
+| `/articles` | Writing    | above the cloud line                  | Two externally published pieces               |
+| `/cv`       | none       | deep woods (off-trail fallback)       | CV as HTML; not a station                     |
 
-`/experience` no longer exists. It was merged into `/skills`. The `foothills`
-terrain biome remains generated but is not referenced by any station; see
-[`landscape.md`](landscape.md#biomes-and-the-unused-foothills).
+`/experience` no longer exists. It was merged into `/skills`. The landscape is
+one continuous panorama for the whole trail; each station has a fixed window on
+it. See [`landscape.md`](landscape.md).
 
 The generated 404 is also a real page in the export. Unknown paths resolve to the
-forest station visually, while the 404 document offers the trail as links.
+Home station's woods visually, while the 404 document offers the trail as links.
 
 ## Quick start
 
@@ -94,15 +94,16 @@ CI; the rest are enforced by review.
    pan targets and `llms.txt` page list. The plain-Node copy in
    `scripts/lib/stations.mjs` must be updated by hand at the same time.
 3. **Station geometry has one owner.** `src/lib/station-geometry.ts` defines the
-   gutter, span, slot, strip and target maths for both the landscape and the
+   gutter, span, strip and target maths for both the landscape and the
    swipe gesture. Do not duplicate those calculations in a component.
 4. **One horizontal spring.** Every depth band pans at the same rate from the
    same spring. Per-depth horizontal parallax was explicitly rejected; depth is
    expressed vertically.
-5. **The content offset and the near terrain are a pair.** `BODY_DVH = 24` in
-   `src/components/landscape/terrain-mask.ts`, the depth-1 ground line cap of
-   `106`, and `CONTENT_OFFSET_DVH = 20` put content at an absolute `120` scene
-   units. Changing one without the others puts terrain over headings.
+5. **The content offset and the near terrain are a pair.** `BODY_VU = 24` and
+   `CAMERA.nearBase = 106` in `scripts/lib/terrain-config.mjs` end the near band
+   at `130`, and `CONTENT_OFFSET_DVH = 20` puts content at an absolute `120`
+   scene units, under the dissolving body. Changing one without the others puts
+   terrain over headings.
 6. **Use scene units for the composition.** Terrain, hero, haze, orb and content
    offset read from `--vu` (`1%` of `--scene`), not from `dvh` or `h-screen`.
    `--scene` has a `48rem` floor for short landscape viewports.
@@ -113,7 +114,9 @@ CI; the rest are enforced by review.
    canonical tells crawlers every station is a duplicate of the homepage.
 9. **Content is typed and derived surfaces read it directly.** Do not hand-edit
    `src/content/terrain.generated.ts`; edit `scripts/lib/terrain-config.mjs` or
-   `scripts/lib/terrain-grammars.mjs` and run `pnpm terrain`.
+   `scripts/lib/terrain-grammars.mjs` and run `pnpm terrain`. The panorama is
+   generated for a strip exactly `STRIP_VW` wide; `Landscape.tsx` throws if
+   `PANORAMA.stripVw` disagrees.
 10. **`trailingSlash: true` is required by the deployment target.** The export
     must contain directory-index pages such as `out/skills/index.html`.
     `scripts/verify-export.mjs` fails the build otherwise.
@@ -149,18 +152,16 @@ an agent does not "fix" working code to match an old comment. This documentation
 PR intentionally changes no source; correct these opportunistically when the
 surrounding file is next edited.
 
-| Location                                                                                  | It says                                                    | Current implementation                                                                                                        |
-| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `README.md`, landscape section                                                            | The foreground body is `12dvh` and ends by `118dvh`        | `BODY_DVH = 24` in `src/components/landscape/terrain-mask.ts`; the depth-1 body starts at ground line `106` and reaches `130` |
-| `README.md`, colour section                                                               | `scripts/check-contrast.mjs` asserts `26` shipped pairs    | The `PAIRS` array has `25` entries, plus two terrain-ramp checks and one dark-near-layer check                                |
-| `README.md`, landscape section                                                            | "All three fixed bands" are `pointer-events: none`         | There are two fixed landscape bands: `Z.landscapeFar` and `Z.landscapeNear`                                                   |
-| `README.md`, content section; `src/content/types.ts` `Skill.icon` comment                 | The technology wall runs two visual registers              | `BrandMark` renders one bordered pill for every skill, with an optional mark prefix                                           |
-| `README.md`, content section; `src/content/types.ts` and `src/content/skills.ts` comments | A typo in `Role.stack` or `Project.stack` is a build error | Both fields are `readonly string[]`; the UI falls back to the raw id when lookup fails                                        |
-| `README.md`, opening line                                                                 | "Four pages"                                               | Four stations plus `/cv` and the generated 404; "four pages" is accurate only if it means stations                            |
-| `src/app/not-found.tsx` header comment                                                    | `trailingSlash` stays at its default                       | `next.config.ts` sets `trailingSlash: true`; Next 16 emits both `out/404.html` and `out/404/index.html`                       |
-| `src/components/layout/StationHero.tsx` comment                                           | The foreground band is capped at `118`                     | The near band reaches `130` scene units; content begins at `120`                                                              |
-| `package.json` description                                                                | "A five-stage landscape portfolio"                         | Four stations and one off-trail CV page                                                                                       |
-| `plans/001-core-design.md`                                                                | Five stages, `/experience`, and `trailingSlash: false`     | Historical pre-build plan; superseded by the current four-station implementation                                              |
+| Location                                                                                  | It says                                                    | Current implementation                                                                                  |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `README.md`, colour section                                                               | `scripts/check-contrast.mjs` asserts `26` shipped pairs    | The `PAIRS` array has `25` entries, plus two terrain-ramp checks and one dark-near-layer check          |
+| `README.md`, content section; `src/content/types.ts` `Skill.icon` comment                 | The technology wall runs two visual registers              | `BrandMark` renders one bordered pill for every skill, with an optional mark prefix                     |
+| `README.md`, content section; `src/content/types.ts` and `src/content/skills.ts` comments | A typo in `Role.stack` or `Project.stack` is a build error | Both fields are `readonly string[]`; the UI falls back to the raw id when lookup fails                  |
+| `README.md`, opening line                                                                 | "Four pages"                                               | Four stations plus `/cv` and the generated 404; "four pages" is accurate only if it means stations      |
+| `src/app/not-found.tsx` header comment                                                    | `trailingSlash` stays at its default                       | `next.config.ts` sets `trailingSlash: true`; Next 16 emits both `out/404.html` and `out/404/index.html` |
+| `src/components/layout/StationHero.tsx` comment                                           | The foreground band is capped at `118`                     | The near band reaches `130` scene units; content begins at `120`                                        |
+| `package.json` description                                                                | "A five-stage landscape portfolio"                         | Four stations and one off-trail CV page                                                                 |
+| `plans/001-core-design.md`                                                                | Five stages, `/experience`, and `trailingSlash: false`     | Historical pre-build plan; superseded by the current four-station implementation                        |
 
 ### Documentation maintenance
 

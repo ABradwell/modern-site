@@ -1,5 +1,3 @@
-import type { BiomeKey } from './terrain.generated'
-
 /**
  * The journey.
  *
@@ -9,53 +7,37 @@ import type { BiomeKey } from './terrain.generated'
  * world, so it is the single source of truth for the nav, the pan offset and
  * the trail marker alike.
  *
- * The progression is deliberate rather than decorative. You start on the forest
- * floor, cross open ground, reach the peaks, and end above the cloud line
- * looking at what has not been written yet.
+ * The progression is deliberate rather than decorative. You start in deep
+ * woods, walk out at their edge into a clearing where a river leaves the trees,
+ * follow it behind a hill to a lake at the foot of the mountains, and end above
+ * the cloud line looking at what has not been written yet. That world is one
+ * panorama, drawn by scripts/generate-terrain.mjs from the route in
+ * scripts/lib/terrain-config.mjs, and it is laid out against this list: each
+ * station's window on it is fixed by its index.
  *
  * FOUR STATIONS, not five. Skills and experience were separate pages and are now
  * one, so `/experience` is gone and `/skills` carries both under the label
- * "Experience". That leaves the `foothills` biome generated but unreferenced:
- * the terrain config still declares it and `pnpm terrain` still emits it, which
- * costs about a fifth of the generated file and nothing at runtime, since only
- * the biomes named here are ever mounted. It is left in place rather than
- * deleted because it is the obvious home for a fifth station if one arrives.
+ * "Experience".
  *
  * Two things have to move with this list or the build breaks. STATIONS in
  * scripts/lib/stations.mjs is the plain-Node copy that verify-export.mjs checks
  * against out/, and it is what caught this route rename by failing the build.
- * The pan strip in Landscape.tsx derives both its width and its per-station
- * width from STATIONS.length, so adding or removing a station here needs no
- * change there. It was hardcoded for five and is not any more.
+ * The panorama is generated for a strip as wide as the stations, so adding or
+ * removing one means extending the route in terrain-config.mjs and running
+ * `pnpm terrain`; the landscape throws if the two disagree.
  */
 export interface Station {
   readonly href: string
   readonly label: string
   /** Used on the trail marker, where the full label will not fit. */
   readonly short: string
-  readonly biome: BiomeKey
 }
 
 export const STATIONS: readonly Station[] = [
-  { href: '/', label: 'Home', short: 'Home', biome: 'forest' },
-  {
-    href: '/skills',
-    label: 'Experience',
-    short: 'Experience',
-    biome: 'plains',
-  },
-  {
-    href: '/projects',
-    label: 'Projects',
-    short: 'Projects',
-    biome: 'mountains',
-  },
-  {
-    href: '/articles',
-    label: 'Writing',
-    short: 'Writing',
-    biome: 'abovecloud',
-  },
+  { href: '/', label: 'Home', short: 'Home' },
+  { href: '/skills', label: 'Experience', short: 'Experience' },
+  { href: '/projects', label: 'Projects', short: 'Projects' },
+  { href: '/articles', label: 'Writing', short: 'Writing' },
 ] as const
 
 /**
@@ -63,7 +45,7 @@ export const STATIONS: readonly Station[] = [
  *
  * Deliberately kept out of STATIONS. That array is the geography: its order
  * sets the pan offset, its length divides the terrain strip, and every entry
- * needs a biome and a route the exporter can find. An off-site link has none of
+ * needs a window on the panorama and a route the exporter can find. An off-site link has none of
  * those, so it rides alongside the trail rather than on it. The nav renders
  * these after the stations; the marker never travels to them, which is correct,
  * because you are never "here".
@@ -80,7 +62,7 @@ export const EXTERNAL_LINKS: readonly ExternalLink[] = [
 /**
  * Index of the station a pathname belongs to.
  *
- * Anything off the trail, a 404 included, resolves to the forest. That is a
+ * Anything off the trail, a 404 included, resolves to the woods. That is a
  * deliberate choice rather than a fallback: an unknown URL should land you
  * somewhere recognisable, not in a void.
  */

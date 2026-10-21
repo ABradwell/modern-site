@@ -7,26 +7,25 @@ east, and each route is a station along it. Scrolling at a station lifts the
 terrain and lets the page rise out of it. Navigating pans the landscape sideways.
 The sun overhead becomes a moon when the reader's colour scheme is dark.
 
-| Route       | Station              | Terrain                            |
-| ----------- | -------------------- | ---------------------------------- |
-| `/`         | Forest               | conifer spires                     |
-| `/skills`   | Plains               | grass, sentinel poplars, a river   |
-| `/projects` | Mountains            | angular fractal ridges             |
-| `/articles` | Above the cloud line | rock, a cloud sea, distant summits |
+| Route       | Station              | Terrain                                                                    |
+| ----------- | -------------------- | -------------------------------------------------------------------------- |
+| `/`         | Deep woods           | four rows of conifers                                                      |
+| `/skills`   | The woods' edge      | a meadow, a river leaving the trees past poplars, far woods, distant hills |
+| `/projects` | The lake             | the river behind a low hill, a lake at the foot of the mountains           |
+| `/articles` | Above the cloud line | rock, a cloud sea, distant summits                                         |
 
 `/skills` is labelled **Experience** in the navigation and carries roles, core
 competencies and education together. It used to be two routes; merging them
-retired `/experience` and, with it, the `foothills` biome, which the terrain
-config still declares and `pnpm terrain` still emits. Nothing mounts it, so it
-costs a fifth of the generated file and nothing at runtime. It is the obvious
-home for a fifth station if one arrives.
+retired `/experience`.
 
-Stations are separated by a 16vw gutter. A station's terrain bleeds east across
-its own gutter and the next station reaches back west across it and fades in, so
-a pan never shows the vertical step where one biome's crest tile was cut mid-tree
-and the next began mid-saddle. Because a station's window is bounded by its
-neighbours' slot edges, exactly one biome is drawn at rest and the blend is only
-ever visible while travelling. Geometry lives in `src/lib/station-geometry.ts`.
+The landscape is one continuous panorama, the whole trail long, so a feature can
+carry from one station into the next: the river that leaves the woods at
+Experience is the one that fills the lake at Projects. Stations are separated by
+a 16vw gutter. There is no seam to hide in a continuous world; the gutter gives a
+change of scene room to happen off-screen, so each station's window shows one
+place at rest and the woods' edge, the hill and the climb into rock are what the
+reader walks through on the way. Geometry lives in
+`src/lib/station-geometry.ts`.
 
 **Swipe navigation.** On touch devices a horizontal drag travels between
 stations, dragging the landscape one-to-one with the finger and committing past
@@ -47,8 +46,8 @@ pnpm dev                       # http://localhost:3000
 pnpm build                     # next build, then verify the export
 pnpm preview                   # build and serve out/ over a static server
 pnpm verify                    # typecheck, lint, format check
-pnpm terrain                   # regenerate the terrain silhouettes
-pnpm terrain -- --preview      # also write a contact sheet to .terrain-preview/
+pnpm terrain                   # regenerate the panorama
+pnpm terrain -- --preview      # also write preview SVGs to .terrain-preview/
 node scripts/check-contrast.mjs # assert every shipped colour pair against WCAG
 node scripts/generate-og.mjs   # regenerate the Open Graph card
 ```
@@ -93,15 +92,16 @@ them.
 
 ```
 scripts/
-  lib/terrain-grammars.mjs   four shape languages: conifers, grassland, ridge, cloudbank
-  lib/terrain-config.mjs     the twenty silhouettes, declared
+  lib/terrain-grammars.mjs   shape languages: conifers, snags, poplars, massifs, cloud sea, water
+  lib/terrain-config.mjs     the camera and the route, declared row by row
+  lib/terrain-render.mjs     flattens a window of the panorama for the preview and the card
   generate-terrain.mjs       writes src/content/terrain.generated.ts, validates geometry
   generate-og.mjs            writes the committed Open Graph card
   check-contrast.mjs         asserts every colour pair the site ships
   verify-export.mjs          post-build gate over out/
 src/
   app/                       routes, error surfaces, metadata routes
-  components/landscape/      the scene: bands, orb, grain, mask builder
+  components/landscape/      the scene: bands, panorama renderer, travel, orb, grain
   components/layout/         header, trail nav, mobile nav, hero and content shells
   content/                   all site content as typed modules
   lib/                       tokens for motion, the z-index scale, cn()
@@ -115,7 +115,7 @@ unmounts and the pan is continuous travel rather than a crossfade imitating it.
 
 Two fixed bands sandwich the page. Almost everything paints behind content; only
 the nearest treeline paints in front, and only far enough to overlap section
-padding. All three fixed bands are `pointer-events: none`, which is load-bearing
+padding. Both fixed bands are `pointer-events: none`, which is load-bearing
 rather than tidy: without it the terrain silently swallows clicks.
 
 Horizontal movement uses **one shared spring for every depth**. Per-depth
@@ -126,10 +126,13 @@ the rate.
 
 ### Two numbers that are a pair
 
-The depth-1 `bottom` in `terrain-config.mjs` is capped at 106 so the foreground
-band, including its 12dvh body, ends by 118dvh. `CONTENT_OFFSET_DVH` in
-`src/lib/motion.ts` puts content at an absolute 120dvh on every route. Raise
-either without the other and terrain starts painting over headings. Every hero is
+`CAMERA.nearBase` in `terrain-config.mjs` caps the near ground line at 106 scene
+units. The near row carries a 24-unit body (`BODY_VU`) beneath it, solid for its
+first 40% and dissolving after that, so the band ends at 130.
+`CONTENT_OFFSET_DVH` in `src/lib/motion.ts` puts content at an absolute 120 on
+every route, so content comes out from under the dissolving canopy rather than
+from behind a slab. Raise either without the other and terrain starts painting
+over headings. Every hero is
 the same height for the same reason: the landscape is an absolute composition, so
 where content begins has to be absolute too.
 
@@ -141,24 +144,32 @@ is no runtime cost, no hydration risk, and a reviewable diff when a shape change
 Edit a grammar or the config, then `pnpm terrain`. CI regenerates and fails if the
 result differs from what is committed.
 
-`--preview` writes an SVG contact sheet per biome at true dvh proportions, with a
-rule drawn at the fold. Look at those before changing numbers.
+`--preview` writes the whole panorama to `.terrain-preview/panorama.svg`, plus a
+laptop and a phone window for every station, flattened by `renderWindow` in
+`scripts/lib/terrain-render.mjs`. Look at those before changing numbers. The
+same renderer draws the Home window for the Open Graph card.
 
-The generator validates each tile: it must start and end on its baseline so the
-repeat is seamless, stay inside its viewBox, and contain no self-intersecting
-line subpath. It also reports rendered element aspect, which should stay near 2.4
-for the conifer bands.
+The generator checks the camera and the shapes: at least 3.5 scene units of floor
+between consecutive rows, rows that recede, a near ground line no lower than
+`nearBase`, nothing in the near row standing higher than `NEAR_TOP` (76), water
+between row 2's ground line and the near row, every symbol point inside its
+viewBox, and no self-intersecting line-only subpath.
 
-Two things about tile geometry that cost real time to find, and will cost it
-again if undone:
+`src/components/landscape/panorama.tsx` draws each row as inline SVG. Shapes with
+a proportion of their own (conifers, snags, poplars, hills, mountains) are
+`<symbol>`s placed by `<use>`: positioned in viewport widths, sized in scene
+units, and fitted with `xMidYMax meet`, so they never distort. Each use box is
+`boxFit` (2.6) times the shape's design width, so on a narrow screen shapes
+scale down uniformly instead of crowding. What lies in the ground plane (meadow
+rolls, mountain shoulders, the cloud sea, the river, the lake, the body) is drawn
+in a nested SVG with `preserveAspectRatio="none"` and stretches. Every other
+placed shape carries `lod-1`, which `globals.css` hides below an aspect ratio of
+7:5.
 
-- **Never put `preserveAspectRatio="none"` on a mask tile.** It removes the
-  intrinsic aspect ratio, so `mask-size: auto <height>` has nothing to derive the
-  width from and the browser scales x and y by different factors. Every
-  silhouette silently distorts.
-- **Never set `-webkit-mask-composite`.** It is not an alias for
-  `mask-composite`; it takes different keywords, and set alongside the standard
-  property it overrides it.
+One rule follows from that split, and will cost time if broken: **a symbol may
+only stand on its row's base, never on another symbol's surface.** Positions are
+in viewport widths and sizes in scene units, so the two only line up at one
+viewport shape. Trees on a hill are baked into the hill's symbol.
 
 ## Colour
 
@@ -377,7 +388,7 @@ so both maintain themselves.
 **`/llms.txt`.** `src/app/llms.txt/route.ts`. The whole site as one plain-text
 document in reading order. The HTML is a poor artefact to hand a model: the
 prose is interleaved with fifty-odd inline RSC flight payloads and kilobytes of
-SVG terrain mask, so everything is present and almost none of it is easy to
+inline SVG terrain, so everything is present and almost none of it is easy to
 find. This is the same content with the presentation removed. It is a route
 handler rather than a file in `public/` so that it reads the typed content
 modules directly; the extension in the segment name is what makes Next write

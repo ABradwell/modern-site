@@ -1,30 +1,17 @@
 'use client'
 
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-} from 'motion/react'
+import { motion, useReducedMotion, useScroll, type MotionValue } from 'motion/react'
 
 import { useStationPan } from '@/components/system/station-swipe'
-import { STATIONS } from '@/content/stations'
-import { TERRAIN } from '@/content/terrain.generated'
+import { PANORAMA } from '@/content/terrain.generated'
 import { SPEED } from '@/lib/motion'
-import {
-  GUTTER_VW,
-  SEAM_RAMP_PCT,
-  SLOT_VW,
-  SPAN_VW,
-  STRIP_VW,
-  stripPct,
-} from '@/lib/station-geometry'
+import { STRIP_VW } from '@/lib/station-geometry'
 import { Z } from '@/lib/z'
 
 import { SKY_CLASS, hazeStyle } from './atmosphere'
 import { Orb } from './Orb'
-import { terrainLayerStyle, waterStyle } from './terrain-mask'
+import { PanoramaRowSvg, PanoramaWaterSvg, panoramaRow } from './panorama'
+import { Travel, useTravelRange } from './travel'
 
 /**
  * The landscape.
@@ -59,14 +46,21 @@ import { terrainLayerStyle, waterStyle } from './terrain-mask'
  * The sky, haze and orb sit OUTSIDE the pan on purpose. A continuous sky has no
  * edges to slide, and a celestial body is effectively at infinity, so walking
  * east does not move it.
+ *
+ * ON PAINT ORDER AND LAYERS. Each depth is one Travel layer holding one strip:
+ * that depth's row of the panorama, the whole trail long. A row is moved, never
+ * repainted: scrolling moves the depth's layer and panning moves its strip, and
+ * both are compositor transforms. See panorama.tsx for how the row is drawn.
  */
 export function Landscape() {
   const reduce = useReducedMotion() ?? false
 
-  // No scroll listener anywhere. Motion reads scroll through its own batched
-  // frameloop and writes transforms straight to style, outside React's render
-  // cycle, so no continuous value ever passes through useState.
+  // No scroll listener anywhere. Where the browser has scroll timelines the
+  // travel is a CSS animation; elsewhere Motion reads scroll through its own
+  // batched frameloop and writes transforms straight to style, outside React's
+  // render cycle. Either way no continuous value ever passes through useState.
   const { scrollY } = useScroll()
+  useTravelRange()
 
   // The pan is owned by StationSwipe, not by this component. Both a route change
   // and a finger on the screen move the same strip, and giving them one spring
@@ -80,26 +74,24 @@ export function Landscape() {
         className="pointer-events-none fixed inset-0 overflow-hidden"
         style={{ zIndex: Z.landscapeFar }}
       >
-        <Sky scrollY={scrollY} still={reduce} />
-        <Haze scrollY={scrollY} still={reduce} />
+        <Travel
+          scrollY={scrollY}
+          speed={SPEED.sky}
+          still={reduce}
+          className={SKY_CLASS}
+        />
+        <Travel scrollY={scrollY} speed={SPEED.haze} still={reduce} style={hazeStyle()} />
         <Orb scrollY={scrollY} still={reduce} />
-        <PanStrip pan={pan}>
-          {(station) => (
-            <>
-              <DepthLayer biome={station} depth={4} scrollY={scrollY} still={reduce} />
-              <DepthLayer biome={station} depth={3} scrollY={scrollY} still={reduce} />
-              <DepthLayer biome={station} depth={2} scrollY={scrollY} still={reduce} />
-              {/*
-                The river paints AFTER row 2, not before it. Water lies in the
-                ground plane in front of that row, and behind it the row's solid
-                ground hides the ribbon completely, which is what an earlier
-                version did and why the river kept having to be shoved up into
-                the sky to be visible at all.
-              */}
-              <WaterLayer biome={station} scrollY={scrollY} still={reduce} />
-            </>
-          )}
-        </PanStrip>
+        <DepthBand depth={4} pan={pan} scrollY={scrollY} still={reduce} />
+        <DepthBand depth={3} pan={pan} scrollY={scrollY} still={reduce} />
+        <DepthBand depth={2} pan={pan} scrollY={scrollY} still={reduce} />
+        {/*
+          The river paints AFTER row 2, not before it. Water lies in the ground
+          plane in front of that row, and behind it the row's solid ground hides
+          the ribbon completely, which is what an earlier version did and why the
+          river kept having to be shoved up into the sky to be visible at all.
+        */}
+        <WaterBand pan={pan} scrollY={scrollY} still={reduce} />
       </div>
 
       {/*
@@ -112,11 +104,7 @@ export function Landscape() {
         className="pointer-events-none fixed inset-0 overflow-hidden"
         style={{ zIndex: Z.landscapeNear }}
       >
-        <PanStrip pan={pan}>
-          {(station) => (
-            <DepthLayer biome={station} depth={1} scrollY={scrollY} still={reduce} />
-          )}
-        </PanStrip>
+        <DepthBand depth={1} pan={pan} scrollY={scrollY} still={reduce} />
       </div>
     </>
   )
@@ -126,88 +114,48 @@ export function Landscape() {
 // Horizontal pan
 // ---------------------------------------------------------------------------
 
+// The generator lays the world out across a strip of its own width. If the
+// station list changes length without `pnpm terrain` being run, the pan would
+// stop landing on stations, so fail where it is noticed rather than on screen.
+if (PANORAMA.stripVw !== STRIP_VW) {
+  throw new Error(
+    `terrain is ${PANORAMA.stripVw}vw wide but stations span ${STRIP_VW}vw; run pnpm terrain`,
+  )
+}
+
 /**
- * Every station side by side, panned as one.
+ * The whole trail, panned as one.
  *
- * Absolutely positioned rather than flexed, because the slots have to OVERLAP in
- * the gutters and flex children cannot. Later stations paint over earlier ones in
- * DOM order, which is the direction the fade needs.
- *
- * The fade is a mask on the slot, multiplying with the terrain masks inside it.
- * repeat-y rather than no-repeat is load-bearing: the mask box is the slot, which
- * is one viewport tall, while the near band's body runs to 130dvh. With no-repeat
- * everything past the bottom of the slot falls outside the mask and is cut off.
- * The gradient is uniform vertically, so tiling it costs nothing and covers every
- * overhang.
+ * will-change keeps the strip on its own layer, so the pan slides pixels that
+ * were rasterised once instead of redrawing the row on every frame.
  */
 function PanStrip({
   pan,
   children,
 }: {
   pan: MotionValue<string>
-  children: (biome: (typeof STATIONS)[number]['biome']) => React.ReactNode
+  children: React.ReactNode
 }) {
-  const seam = `linear-gradient(to right, transparent 0%, #000 ${SEAM_RAMP_PCT.toFixed(3)}%)`
-
   return (
     <motion.div
       className="absolute inset-y-0 left-0"
-      style={{ x: pan, width: `${STRIP_VW}%` }}
+      style={{ x: pan, width: `${STRIP_VW}%`, willChange: 'transform' }}
     >
-      {STATIONS.map((station, i) => (
-        <div
-          key={station.href}
-          className="absolute inset-y-0"
-          style={{
-            left: `${stripPct(i * SPAN_VW - GUTTER_VW)}%`,
-            width: `${stripPct(SLOT_VW)}%`,
-            maskImage: seam,
-            maskSize: '100% 100%',
-            maskRepeat: 'repeat-y',
-          }}
-        >
-          {children(station.biome)}
-        </div>
-      ))}
+      {children}
     </motion.div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Vertical travel
+// Terrain
 // ---------------------------------------------------------------------------
 
 /**
- * Upward travel for one layer: -scrollY * speed, in pixels.
- *
- * Pixels rather than dvh, so no viewport measurement and no resize listener are
- * needed. A layer at speed 1.0 tracks page content exactly; below 1.0 it falls
- * behind and reads as distant; above 1.0 it outruns the content and lifts away.
- *
- * `still` collapses the output instead of skipping the hook, so hook order
- * stays stable if the reader flips the OS reduced-motion setting mid-session.
+ * Every row's box runs PANORAMA.bandVu deep: the lowest ground line plus the
+ * body it carries, 130 with the current camera. Shallower and the near body is
+ * cut off along a hard line once the reader scrolls.
  */
-function useTravel(scrollY: MotionValue<number>, speed: number, still: boolean) {
-  return useTransform(scrollY, (y) => (still ? 0 : -y * speed))
-}
-
-// ---------------------------------------------------------------------------
-// Sky, haze
-// ---------------------------------------------------------------------------
-
-function Sky({ scrollY, still }: { scrollY: MotionValue<number>; still: boolean }) {
-  const y = useTravel(scrollY, SPEED.sky, still)
-  return <motion.div style={{ y }} className={SKY_CLASS} />
-}
-
-function Haze({ scrollY, still }: { scrollY: MotionValue<number>; still: boolean }) {
-  const y = useTravel(scrollY, SPEED.haze, still)
-  return <motion.div style={{ ...hazeStyle(), y }} />
-}
-
-// ---------------------------------------------------------------------------
-// Terrain
-// ---------------------------------------------------------------------------
+const BAND_STYLE = { height: `calc(var(--vu) * ${PANORAMA.bandVu})` } as const
 
 const SPEED_BY_DEPTH = {
   1: SPEED.terrain1,
@@ -216,45 +164,54 @@ const SPEED_BY_DEPTH = {
   4: SPEED.terrain4,
 } as const
 
-function DepthLayer({
-  biome,
+/** One depth of the panorama: its own vertical travel, the one shared pan. */
+function DepthBand({
   depth,
+  pan,
   scrollY,
   still,
 }: {
-  biome: (typeof STATIONS)[number]['biome']
   depth: 1 | 2 | 3 | 4
+  pan: MotionValue<string>
   scrollY: MotionValue<number>
   still: boolean
 }) {
-  const y = useTravel(scrollY, SPEED_BY_DEPTH[depth], still)
-  const layer = TERRAIN[biome].layers.find((l) => l.depth === depth)
-  if (!layer) return null
-
   return (
-    <motion.div className="absolute inset-0" style={{ y }}>
-      <div style={terrainLayerStyle(layer)} />
-    </motion.div>
+    <Travel
+      scrollY={scrollY}
+      speed={SPEED_BY_DEPTH[depth]}
+      still={still}
+      className="absolute inset-x-0 top-0"
+      style={BAND_STYLE}
+    >
+      <PanStrip pan={pan}>
+        <PanoramaRowSvg row={panoramaRow(depth)} id={`land${depth}`} />
+      </PanStrip>
+    </Travel>
   )
 }
 
-/** The plains river. Only one station has water, so the rest render nothing. */
-function WaterLayer({
-  biome,
+/** The river and the lake it runs into. */
+function WaterBand({
+  pan,
   scrollY,
   still,
 }: {
-  biome: (typeof STATIONS)[number]['biome']
+  pan: MotionValue<string>
   scrollY: MotionValue<number>
   still: boolean
 }) {
-  const y = useTravel(scrollY, SPEED.water, still)
-  const water = TERRAIN[biome].river
-  if (!water) return null
-
   return (
-    <motion.div className="absolute inset-0" style={{ y }}>
-      <div style={waterStyle(water)} />
-    </motion.div>
+    <Travel
+      scrollY={scrollY}
+      speed={SPEED.water}
+      still={still}
+      className="absolute inset-x-0 top-0"
+      style={BAND_STYLE}
+    >
+      <PanStrip pan={pan}>
+        <PanoramaWaterSvg />
+      </PanStrip>
+    </Travel>
   )
 }
