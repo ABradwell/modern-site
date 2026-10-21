@@ -99,6 +99,11 @@ Every depth band uses this one spring. Per-depth horizontal stiffness was tried
 and rejected: it reads as the world coming apart on a full-viewport slide and
 caused motion sickness. Depth is expressed vertically instead.
 
+There is one strip per depth, not one per band. Each depth is a `DepthBand`: a
+`Travel` layer for its vertical speed, holding a `PanStrip` with that depth's row
+for every station. In a gutter, each row therefore fades into the matching row of
+the next biome, and a far ridge never paints over a nearer row from the west.
+
 The strip is `position: absolute` rather than flexed because slots must overlap
 in the gutters, and later stations must paint over earlier ones in DOM order.
 The fade is a mask on each slot, using `mask-repeat: repeat-y` so the slot mask
@@ -106,7 +111,16 @@ also covers the near band's body below the one-viewport slot box.
 
 ## Vertical travel: depth on scroll
 
-All landscape layers are fixed and transform upward by `-scrollY * speed`.
+All landscape layers are fixed and translate upward by `-scrollY * speed`.
+
+`Travel` in `src/components/landscape/travel.tsx` owns this. Where the browser
+supports scroll-driven animations, the `.landscape-travel` rule in `globals.css`
+runs the travel as a CSS animation on the root scroll timeline, so the compositor
+moves the layers in the same frame as the page. `useTravelRange` publishes the
+scroll range as `--travel-max` so the keyframes can turn progress back into
+pixels. Elsewhere, Motion drives the same offset from `useScroll`. The CSS path
+writes `translate` and Motion writes `transform`, so the idle path always holds
+its identity value.
 The speeds in `src/lib/motion.ts` are absolute multipliers of scroll distance:
 
 | Layer           | `SPEED` | Reading                                               |
@@ -133,9 +147,24 @@ Rules that follow from the table:
   ground plane in front of that row; at `0.82` it drifted out from under the near
   grass.
 
-`useTravel` collapses the output to zero when reduced motion is active rather
-than skipping hooks, so hook order remains stable if the OS setting changes
+`Travel` collapses the Motion output to zero when reduced motion is active rather
+than skipping hooks, and the CSS path is gated on `prefers-reduced-motion:
+no-preference`, so hook order remains stable if the OS setting changes
 mid-session. The spring uses `jump()` under reduced motion.
+
+## Compositing
+
+Every moving element is its own compositor layer: each `Travel` layer carries
+`will-change: transform`, and so does each `PanStrip`. Scrolling and panning then
+move pixels that were rasterised once. When every depth shared one layer per
+band, any motion repainted every SVG mask in the band at device pixel ratio on
+every frame, which is what made the scene judder on slower GPUs.
+
+Each depth band's box is `BAND_DEPTH_VU` deep, the lowest ground line plus
+`BODY_DVH` (130 scene units today). It has to contain every row, because the
+seam mask on each slot clips to the slot's box and the slot travels with its
+depth. A one-viewport box cuts the near body off along a hard line once the
+reader scrolls.
 
 ## Terrain bands and masks
 
@@ -289,6 +318,9 @@ and has no global styles; it is a separate inline-styled document.
 - Do not add `preserveAspectRatio="none"` or `-webkit-mask-composite`.
 - Do not add a third fixed landscape band without checking the click and
   stacking consequences.
+- Do not drive a landscape layer's vertical offset from a scroll listener or a
+  bare `useTransform`; wrap it in `Travel` so it stays on the compositor.
+- Do not shrink a depth band's box below `BAND_DEPTH_VU`.
 - Do not hide essential content in the landscape; it is decorative.
 - When changing the river, keep it after depth 2 and keep its speed between
   terrain 2 and content.

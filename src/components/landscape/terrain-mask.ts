@@ -18,7 +18,7 @@ import type { TerrainLayer, TerrainWater } from '@/content/terrain.generated'
  * the page content, so content genuinely passes behind the canopy, but it clears
  * the window instead of becoming a wall.
  */
-const BODY_DVH = 24
+export const BODY_DVH = 24
 
 /**
  * Fraction of the body that stays solid before the dissolve begins.

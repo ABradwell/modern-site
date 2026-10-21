@@ -1,10 +1,11 @@
 'use client'
 
-import { motion, useTransform, type MotionValue } from 'motion/react'
+import type { MotionValue } from 'motion/react'
 
 import { SPEED } from '@/lib/motion'
 
 import { ORB_CLASS, ORB_DISC, ORB_HALO } from './atmosphere'
+import { Travel } from './travel'
 
 /**
  * The sun, or the moon in dark mode.
@@ -46,10 +47,8 @@ export function Orb({
   scrollY: MotionValue<number>
   still: boolean
 }) {
-  const y = useTransform(scrollY, (v) => (still ? 0 : -v * SPEED.orb))
-
   return (
-    <motion.div style={{ y }} className={ORB_CLASS}>
+    <Travel scrollY={scrollY} speed={SPEED.orb} still={still} className={ORB_CLASS}>
       <div
         className="absolute inset-[-55%] rounded-full opacity-70"
         style={{ background: ORB_HALO }}
@@ -58,6 +57,6 @@ export function Orb({
         className="absolute inset-0 rounded-full transition-[background] duration-500 ease-[var(--ease-out-expo)] motion-reduce:transition-none"
         style={{ background: ORB_DISC }}
       />
-    </motion.div>
+    </Travel>
   )
 }

@@ -418,7 +418,40 @@
 }
 
 /* ---------------------------------------------------------------------------
-   7. REDUCED MOTION
+   7. LANDSCAPE TRAVEL
+
+   Vertical depth for the landscape layers, run on the root scroll timeline so
+   the compositor moves them in the same frame as the page. See Travel in
+   src/components/landscape/travel.tsx, which owns --travel-max and falls back
+   to Motion where scroll timelines are missing.
+
+   Progress runs 0 to 1 across the scroll range, so translating by the range
+   times the speed at the end puts every frame at exactly -scrollY * speed.
+--------------------------------------------------------------------------- */
+.landscape-travel {
+  will-change: transform;
+}
+
+@keyframes landscape-travel {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 calc(var(--travel-max, 0px) * var(--travel-speed) * -1);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landscape-travel {
+      animation: landscape-travel linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   8. REDUCED MOTION
 
    Motion islands additionally gate themselves with useReducedMotion(), which
    collapses their transform ranges to zero. This block is the belt to that
