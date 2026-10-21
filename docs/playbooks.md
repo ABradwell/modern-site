@@ -22,9 +22,9 @@ Do not duplicate a datum into a page file if it already exists in content.
    `stack` ids, optional links/credit, and `featured` as appropriate.
 3. If it has an image, place it under `public/images/projects/` and include
    `src`, `alt`, `width` and `height`.
-4. If `featured: true`, confirm the home page's featured grid still reads well
-   with the new count. The home layout expects `FEATURED_PROJECTS`, not all
-   projects.
+4. `featured` only affects `FEATURED_PROJECTS`, which no page currently mounts;
+   `/projects` renders all `PROJECTS`. If a featured grid is reintroduced,
+   check that it reads well with the new count.
 5. Run `pnpm typecheck` and `pnpm build`.
 6. Check `out/projects/index.html` and the JSON-LD `ItemList` in
    `src/lib/schema.ts` — the list is derived from `PROJECTS`.

@@ -9,7 +9,7 @@ sitemap. `/cv` deliberately does none of those things.
 
 | Route       | Source                      | Nav label  | Biome            | Canonical    | Main sections                                                |
 | ----------- | --------------------------- | ---------- | ---------------- | ------------ | ------------------------------------------------------------ |
-| `/`         | `src/app/page.tsx`          | Home       | forest           | `/`          | Hero, About, Get in touch, Selected work                     |
+| `/`         | `src/app/page.tsx`          | Home       | forest           | `/`          | Hero, About, Get in touch, Core competencies                 |
 | `/skills`   | `src/app/skills/page.tsx`   | Experience | plains           | `/skills/`   | Hero, Core competencies, Roles, Also worked with, Education  |
 | `/projects` | `src/app/projects/page.tsx` | Projects   | mountains        | `/projects/` | Hero, Built                                                  |
 | `/articles` | `src/app/articles/page.tsx` | Writing    | above cloud line | `/articles/` | Hero, Published, What is coming                              |
@@ -35,10 +35,12 @@ repeated:
 
 1. **About**: single measured column (65ch) plus a portrait.
 2. **Get in touch**: two-column close with the contact routes.
-3. **Selected work**: asymmetric project grid from `FEATURED_PROJECTS`.
+3. **Core competencies**: tier-1 skills grouped by `WALL_GROUPS`, each as a
+   `BrandMark` pill, from the shared `CoreCompetencies` component.
 
-Order is deliberate. Contact comes before selected work because the page's job
-is to prompt contact; the work is supporting evidence. The hero's primary button
+Order is deliberate. Contact comes before the competencies because the page's
+job is to prompt contact; the competency wall is supporting evidence a reader
+can go on to explore in full on the Experience page. The hero's primary button
 goes to `/skills`, and its secondary button jumps to `#contact` rather than
 opening a mail client.
 
@@ -61,10 +63,6 @@ Rendered order in the current code:
 4. **Also worked with**: all tier-2 skills as a plain inline list, not pills.
 5. **Education**: degrees and honours in one column, eligibility from
    `CREDENTIALS` in the other.
-
-The source comment at the top of this page says roles are first and competencies
-second. That is stale; the JSX above is the current order. See
-[`README.md`](README.md#known-drift).
 
 Metadata: title `Experience`, canonical `/skills/`. JSON-LD is
 `experienceGraph` (`ProfilePage`, breadcrumb, and `hasOccupation` entries).

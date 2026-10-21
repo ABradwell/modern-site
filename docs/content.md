@@ -12,7 +12,7 @@ and the metadata routes read the same values.
 | `src/content/stations.ts`          | `STATIONS`, `EXTERNAL_LINKS`, `stationIndex()`, `stationFor()`                 | Nav, pan, sitemap, `llms.txt`, landscape            |
 | `src/content/experience.ts`        | `ROLES`, `MINOR_ROLES`, `EDUCATION`, `CREDENTIALS`                             | Experience, CV, JSON-LD, `llms.txt`                 |
 | `src/content/skills.ts`            | `SKILLS`, `SkillId`, `IconSkillId`, `SKILL_BY_ID`, `WALL_GROUPS`, `skillsIn()` | Experience, projects, registry, JSON-LD, `llms.txt` |
-| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`                                                | Projects, home, JSON-LD, `llms.txt`                 |
+| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`                                                | Projects, JSON-LD, `llms.txt`                       |
 | `src/content/articles.ts`          | `ARTICLES`, `ARTICLES_NOTE`                                                    | Writing, JSON-LD, `llms.txt`                        |
 | `src/content/types.ts`             | All content interfaces and types                                               | Every content module                                |
 | `src/content/terrain.generated.ts` | `TERRAIN`, `BiomeKey`, `HORIZON_DVH`, terrain interfaces                       | Landscape, static landscape                         |
@@ -165,7 +165,8 @@ eligibility text rendered beside it and in `llms.txt`.
 ```
 
 - `summary` is a short card/index line; `detail` is the paragraph on the card.
-- `FEATURED_PROJECTS` drives the home page; `/projects` renders all `PROJECTS`.
+- `FEATURED_PROJECTS` is the `featured: true` subset. No page currently mounts
+  it; `/projects` renders all `PROJECTS`.
 - `image` must include `width` and `height` because images are unoptimized under
   static export. Use `public/images/projects/…`.
 - `credit` is preserved attribution where a project leans on someone else's
@@ -202,16 +203,16 @@ Do not hand-format dates in a page. One helper keeps the Experience, CV and
 
 When content changes, these update automatically:
 
-| Surface            | Derivation                                                                   |
-| ------------------ | ---------------------------------------------------------------------------- |
-| Experience page    | `ROLES`, `SKILLS`, `EDUCATION`, `CREDENTIALS`                                |
-| CV page            | `ROLES.responsibilities`, `EDUCATION`, `CREDENTIALS`                         |
-| Projects page      | `PROJECTS`                                                                   |
-| Writing page       | `ARTICLES`                                                                   |
-| Home featured work | `FEATURED_PROJECTS`                                                          |
-| JSON-LD            | `siteGraph`, `homeGraph`, `experienceGraph`, `projectsGraph`, `writingGraph` |
-| `sitemap.xml`      | `STATIONS`                                                                   |
-| `llms.txt`         | all content modules plus `STATIONS`                                          |
+| Surface                          | Derivation                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| Experience page                  | `ROLES`, `SKILLS`, `EDUCATION`, `CREDENTIALS`                                |
+| CV page                          | `ROLES.responsibilities`, `EDUCATION`, `CREDENTIALS`                         |
+| Projects page                    | `PROJECTS`                                                                   |
+| Writing page                     | `ARTICLES`                                                                   |
+| Home and Experience competencies | `WALL_GROUPS`, `skillsIn(..., 1)`                                            |
+| JSON-LD                          | `siteGraph`, `homeGraph`, `experienceGraph`, `projectsGraph`, `writingGraph` |
+| `sitemap.xml`                    | `STATIONS`                                                                   |
+| `llms.txt`                       | all content modules plus `STATIONS`                                          |
 
 Surfaces that do **not** update automatically:
 

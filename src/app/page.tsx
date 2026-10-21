@@ -3,8 +3,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
-import { FeaturedWork } from '@/components/sections/FeaturedWork'
 import { ContactRoutes } from '@/components/sections/ContactRoutes'
+import { CoreCompetencies } from '@/components/sections/CoreCompetencies'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
@@ -26,13 +26,14 @@ export const metadata: Metadata = {
 
 /**
  * The landing page. Three layout families below the hero, none repeated: a
- * single-column read against a portrait, a two-column close, and an asymmetric
- * project grid.
+ * single-column read against a portrait, a two-column close, and the
+ * label-rail competency wall.
  *
- * Section order is About, then Get in touch, then Selected work. Contact sitting
- * above the work rather than closing the page is deliberate on the owner's part:
- * the page's job is to get someone to make contact, and the projects are
- * supporting evidence a reader can go on to browse.
+ * Section order is About, then Get in touch, then Core competencies. Contact
+ * sitting above the competencies rather than closing the page is deliberate on
+ * the owner's part: the page's job is to get someone to make contact, and the
+ * competencies are supporting evidence a reader can go on to explore in full
+ * on the Experience page.
  */
 export default function HomePage() {
   return (
@@ -140,10 +141,8 @@ export default function HomePage() {
           </div>
         </Section>
 
-        <Section id="work" title="Selected work">
-          {/* The all-projects card lives inside the grid now, under the lead
-              project, so there is no trailing link to append here. */}
-          <FeaturedWork />
+        <Section id="competencies" title="Core competencies">
+          <CoreCompetencies />
         </Section>
       </StationContent>
     </>
