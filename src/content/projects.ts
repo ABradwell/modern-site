@@ -17,7 +17,6 @@ export const PROJECTS: readonly Project[] = [
     detail:
       'Built for Luke, who records, mixes and masters for artists across the North West. It is a static Next.js export with a filterable wall of credits, a showreel and an enquiry form. Every credit lives in one typed module, so adding a session is a single edit that also updates the search data.',
     stack: ['typescript', 'react'],
-    repo: 'https://github.com/ABradwell/luke-portfolio-site',
     live: 'https://stanilandaudio.co.uk',
     image: {
       src: '/images/projects/staniland-audio.jpg',
