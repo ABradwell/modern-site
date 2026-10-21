@@ -32,7 +32,7 @@ HTML; there is no server, database, CMS, authentication or runtime API.
 | ----------- | ---------- | ------------------------------------- | --------------------------------------------- |
 | `/`         | Home       | deep woods                            | Landing page and contact                      |
 | `/skills`   | Experience | the woods' edge, a meadow and a river | Roles, competencies and education in one page |
-| `/projects` | Projects   | a lake at the foot of the mountains   | Six projects in grouped tabs                  |
+| `/projects` | Projects   | a lake at the foot of the mountains   | Seven projects in grouped tabs                |
 | `/articles` | Writing    | above the cloud line                  | Two externally published pieces               |
 | `/cv`       | none       | deep woods (off-trail fallback)       | CV as HTML; not a station                     |
 

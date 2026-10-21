@@ -1,12 +1,32 @@
 import type { Project, ProjectGroup } from './types'
 
 /**
- * Six, curated. The older work is undergraduate coursework and is presented as
+ * Seven, curated. The older work is undergraduate coursework and is presented as
  * such: real dates, real repositories, and no inflation. Where a project leans
  * on someone else's model or library, `credit` says so on the card rather than
  * in a footnote nobody reads.
  */
 export const PROJECTS: readonly Project[] = [
+  {
+    slug: 'llm-seo-toolbox',
+    name: 'LLM SEO Toolbox',
+    year: 2026,
+    group: 'modern-work',
+    summary:
+      'An open-source auditor that rates how readable a URL is for large language models.',
+    detail:
+      'Paste a URL and it classifies the site, then runs twenty checks against the initial HTML response: llms.txt, RFC 9309 robots rules for crawlers like GPTBot and ClaudeBot, static signal-to-noise and the schema.org types that kind of site should carry. Each miss comes back with a score, a letter grade and the exact line that would fix it. No accounts, no cookies, and the audit is also available as a JSON API.',
+    stack: ['typescript', 'react'],
+    live: 'https://llm-seo-toolbox.vercel.app',
+    repo: 'https://github.com/ABradwell/llm-seo-toolbox',
+    image: {
+      src: '/images/projects/llm-seo-toolbox.jpg',
+      alt: 'The LLM SEO Toolbox homepage, with a URL field beside a sample audit of nextjs.org/docs',
+      width: 1200,
+      height: 750,
+    },
+    featured: true,
+  },
   {
     slug: 'staniland-audio',
     name: 'Staniland Audio',
@@ -137,6 +157,7 @@ export const PROJECT_GROUPS: readonly ProjectGroup[] = [
 const STAGE: readonly string[] = [
   'bradwell-music',
   'staniland-audio',
+  'llm-seo-toolbox',
   'number-recognition',
   'hand-tracker',
 ]
