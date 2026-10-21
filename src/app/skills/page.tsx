@@ -2,7 +2,6 @@ import { DownloadSimple } from '@phosphor-icons/react/dist/ssr'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 
-import { BrandMark } from '@/components/brand/BrandMark'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
@@ -14,11 +13,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { CoreCompetencies } from '@/components/sections/CoreCompetencies'
 import { RoleDeliveries } from '@/components/sections/RoleDeliveries'
 import { RoleProgression } from '@/components/sections/RoleProgression'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
 import { CV_PDF, SITE } from '@/content/site'
-import { SKILLS, SKILL_BY_ID, WALL_GROUPS, skillsIn } from '@/content/skills'
+import { SKILLS, SKILL_BY_ID } from '@/content/skills'
 import { range } from '@/lib/dates'
 import { experienceGraph } from '@/lib/schema'
 import { CHIP, META, PROSE, PROSE_TIGHT, TAG } from '@/lib/type'
@@ -44,21 +44,14 @@ export const metadata: Metadata = {
  * the reading order below. `/experience` is gone; this route still answers to
  * /skills and is labelled Experience everywhere a reader sees it.
  *
- * READING ORDER. Roles first, because the roles are the evidence and the
- * technologies are what the evidence was built with. Competencies second, so a
- * reader who has just read what was built can see the toolset behind it.
- * Education last: it is the least current thing on the page, and putting it
- * above the competencies pushed the toolset below the fold for no gain.
+ * READING ORDER. Competencies first, because they are the quickest read: the
+ * toolset is on screen before the reader has to commit to a role. Roles second,
+ * because they are the evidence behind that toolset. Education last: it is the
+ * least current thing on the page, and putting it above the competencies pushed
+ * the toolset below the fold for no gain.
  *
- * The technology wall is category rows of differing length rather than a grid of
- * equal cards. A three-column equal-card feature row is the most generic layout
- * there is, rows let each category be honestly as long or short as it actually
- * is, and a horizontal band sits with the plains horizon behind it rather than
- * fighting it.
- *
- * Headed "Core competencies", never "Trusted by" or "Partners". These are tools
- * this person has used, not customers, so the accurate heading is also the one
- * that implies no endorsement by any trademark holder.
+ * The competency wall itself lives in CoreCompetencies so the home page and this
+ * page present the same grouping and cannot drift apart.
  */
 export default function ExperiencePage() {
   const tierTwo = SKILLS.filter((s) => s.tier === 2)
@@ -103,28 +96,7 @@ export default function ExperiencePage() {
 
       <StationContent>
         <Section id="competencies" title="Core competencies">
-          <div className="divide-y divide-border">
-            {WALL_GROUPS.map((group, gi) => {
-              const items = skillsIn(group.key, 1)
-              if (items.length === 0) return null
-              return (
-                <Reveal key={group.key} index={gi} className="block">
-                  <div className="grid gap-4 py-8 md:grid-cols-[10rem_1fr] md:gap-8 md:py-10">
-                    <h3 className="pt-2 text-base font-medium text-foreground">
-                      {group.label}
-                    </h3>
-                    <ul className="flex flex-wrap items-center gap-2">
-                      {items.map((skill) => (
-                        <li key={skill.id}>
-                          <BrandMark skill={skill} />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
+          <CoreCompetencies />
         </Section>
 
         <Section id="roles" title="Roles">
