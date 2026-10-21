@@ -32,7 +32,7 @@ HTML; there is no server, database, CMS, authentication or runtime API.
 | ----------- | ---------- | --------------------------- | --------------------------------------------- |
 | `/`         | Home       | forest                      | Landing page and contact                      |
 | `/skills`   | Experience | plains                      | Roles, competencies and education in one page |
-| `/projects` | Projects   | mountains                   | Five project cards                            |
+| `/projects` | Projects   | mountains                   | Six projects in grouped tabs                  |
 | `/articles` | Writing    | above cloud line            | Two externally published pieces               |
 | `/cv`       | none       | forest (off-trail fallback) | CV as HTML; not a station                     |
 

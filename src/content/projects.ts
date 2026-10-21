@@ -1,12 +1,31 @@
 import type { Project, ProjectGroup } from './types'
 
 /**
- * Five, curated. The older work is undergraduate coursework and is presented as
+ * Six, curated. The older work is undergraduate coursework and is presented as
  * such: real dates, real repositories, and no inflation. Where a project leans
  * on someone else's model or library, `credit` says so on the card rather than
  * in a footnote nobody reads.
  */
 export const PROJECTS: readonly Project[] = [
+  {
+    slug: 'staniland-audio',
+    name: 'Staniland Audio',
+    year: 2026,
+    group: 'modern-work',
+    summary:
+      'A portfolio and booking site for Luke Staniland, an audio engineer working out of Manchester.',
+    detail:
+      'Built for Luke, who records, mixes and masters for artists across the North West. It is a static Next.js export with a filterable wall of credits, a showreel and an enquiry form. Every credit lives in one typed module, so adding a session is a single edit that also updates the search data.',
+    stack: ['typescript', 'react'],
+    live: 'https://stanilandaudio.co.uk',
+    image: {
+      src: '/images/projects/staniland-audio.jpg',
+      alt: 'The Staniland Audio homepage, with Luke Staniland at a mixing desk during a live session',
+      width: 1200,
+      height: 750,
+    },
+    featured: true,
+  },
   {
     slug: 'bradwell-music',
     name: 'Bradwell Music',
@@ -114,7 +133,12 @@ export const PROJECT_GROUPS: readonly ProjectGroup[] = [
  * of the design and a boolean scattered across five objects cannot express it.
  * Independent of `featured`, which still means the home page.
  */
-const STAGE: readonly string[] = ['bradwell-music', 'number-recognition', 'hand-tracker']
+const STAGE: readonly string[] = [
+  'bradwell-music',
+  'staniland-audio',
+  'number-recognition',
+  'hand-tracker',
+]
 
 function bySlug(slug: string): Project {
   const project = PROJECTS.find((p) => p.slug === slug)
