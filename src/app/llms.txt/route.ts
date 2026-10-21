@@ -1,6 +1,6 @@
 import { ARTICLES } from '@/content/articles'
 import { CREDENTIALS, EDUCATION, MINOR_ROLES, ROLES } from '@/content/experience'
-import { PROJECTS } from '@/content/projects'
+import { PROJECT_SHELVES } from '@/content/projects'
 import { ABOUT, CV_PDF, SITE } from '@/content/site'
 import {
   SKILLS,
@@ -174,20 +174,24 @@ export async function GET() {
 
   push(`## Projects ([full detail](${url('/projects')}))`, '')
 
-  for (const p of PROJECTS) {
-    push(
-      `### ${p.name} (${p.year})`,
-      '',
-      p.summary,
-      '',
-      p.detail,
-      '',
-      `Built with: ${named(p.stack)}.`,
-      ...(p.repo ? [`Repository: ${p.repo}`] : []),
-      ...(p.live ? [`Live: ${p.live}`] : []),
-      ...(p.credit ? [`Credit: ${p.credit}`] : []),
-      '',
-    )
+  for (const { group, projects } of PROJECT_SHELVES) {
+    push(`### ${group.label} (${group.period})`, '')
+
+    for (const p of projects) {
+      push(
+        `#### ${p.name} (${p.year})`,
+        '',
+        p.summary,
+        '',
+        p.detail,
+        '',
+        `Built with: ${named(p.stack)}.`,
+        ...(p.repo ? [`Repository: ${p.repo}`] : []),
+        ...(p.live ? [`Live: ${p.live}`] : []),
+        ...(p.credit ? [`Credit: ${p.credit}`] : []),
+        '',
+      )
+    }
   }
 
   push(`## Writing ([index](${url('/articles')}))`, '')

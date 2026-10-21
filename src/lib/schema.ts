@@ -22,7 +22,7 @@
 
 import { ARTICLES } from '@/content/articles'
 import { EDUCATION, ROLES } from '@/content/experience'
-import { PROJECTS } from '@/content/projects'
+import { PROJECT_SHELVES } from '@/content/projects'
 import { SITE } from '@/content/site'
 import { SKILLS, SKILL_BY_ID, type SkillId } from '@/content/skills'
 
@@ -159,6 +159,9 @@ export const experienceGraph = {
   ],
 }
 
+/** Page order: group by group, newest first within each, as /projects shows them. */
+const SHELVED_PROJECTS = PROJECT_SHELVES.flatMap((shelf) => shelf.projects)
+
 /**
  * Projects. `SoftwareSourceCode` rather than CreativeWork: every one of them is
  * code with a repository, and the more specific type carries `codeRepository`
@@ -177,8 +180,8 @@ export const projectsGraph = {
     {
       '@type': 'ItemList',
       '@id': `${abs('/projects')}#list`,
-      numberOfItems: PROJECTS.length,
-      itemListElement: PROJECTS.map((project, i) => ({
+      numberOfItems: SHELVED_PROJECTS.length,
+      itemListElement: SHELVED_PROJECTS.map((project, i) => ({
         '@type': 'ListItem',
         position: i + 1,
         item: {

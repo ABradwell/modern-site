@@ -12,7 +12,7 @@ and the metadata routes read the same values.
 | `src/content/stations.ts`          | `STATIONS`, `EXTERNAL_LINKS`, `stationIndex()`, `stationFor()`                 | Nav, pan, sitemap, `llms.txt`, landscape            |
 | `src/content/experience.ts`        | `ROLES`, `MINOR_ROLES`, `EDUCATION`, `CREDENTIALS`                             | Experience, CV, JSON-LD, `llms.txt`                 |
 | `src/content/skills.ts`            | `SKILLS`, `SkillId`, `IconSkillId`, `SKILL_BY_ID`, `WALL_GROUPS`, `skillsIn()` | Experience, projects, registry, JSON-LD, `llms.txt` |
-| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`                                                | Projects, JSON-LD, `llms.txt`                       |
+| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`, `PROJECT_GROUPS`, `PROJECT_SHELVES`           | Projects, JSON-LD, `llms.txt`                       |
 | `src/content/articles.ts`          | `ARTICLES`, `ARTICLES_NOTE`                                                    | Writing, JSON-LD, `llms.txt`                        |
 | `src/content/types.ts`             | All content interfaces and types                                               | Every content module                                |
 | `src/content/terrain.generated.ts` | `TERRAIN`, `BiomeKey`, `HORIZON_DVH`, terrain interfaces                       | Landscape, static landscape                         |
@@ -155,6 +155,7 @@ eligibility text rendered beside it and in `llms.txt`.
 ```ts
 {
   slug, name, year,
+  group: 'modern-work' | 'university-work',
   summary, detail,
   stack: string[],
   repo?, live?,
@@ -164,16 +165,22 @@ eligibility text rendered beside it and in `llms.txt`.
 }
 ```
 
-- `summary` is a short card/index line; `detail` is the paragraph on the card.
+- `group` places the project on a tab of `/projects`. Groups and their tab order
+  are `PROJECT_GROUPS`. A group with no projects is not rendered.
+- `STAGE` is the ordered list of slugs shown large on each group's stage. Order
+  is arrow order. An unknown slug throws during the build.
+- `PROJECT_SHELVES` joins the two: per group, its stage projects and all its
+  projects newest first. The projects page, JSON-LD and `llms.txt` read it.
+- `summary` is the index line and stage lede; `detail` is the stage paragraph.
 - `FEATURED_PROJECTS` is the `featured: true` subset. No page currently mounts
-  it; `/projects` renders all `PROJECTS`.
+  it, and it is independent of `STAGE`.
 - `image` must include `width` and `height` because images are unoptimized under
   static export. Use `public/images/projects/…`.
 - `credit` is preserved attribution where a project leans on someone else's
-  model, tutorial or library. It stays on the card, not in a footnote.
-- `repo` and `live` are optional external links. If both are absent, the card
-  simply has no link row.
-- Dates are honest. Undergraduate work keeps its year.
+  model, tutorial or library. It stays on the stage, not in a footnote.
+- `repo` and `live` are optional external links. If both are absent, the
+  project simply has no link row.
+- Dates are honest. University work keeps its year.
 
 ## Articles
 
@@ -207,7 +214,7 @@ When content changes, these update automatically:
 | -------------------------------- | ---------------------------------------------------------------------------- |
 | Experience page                  | `ROLES`, `SKILLS`, `EDUCATION`, `CREDENTIALS`                                |
 | CV page                          | `ROLES.responsibilities`, `EDUCATION`, `CREDENTIALS`                         |
-| Projects page                    | `PROJECTS`                                                                   |
+| Projects page                    | `PROJECT_SHELVES`                                                            |
 | Writing page                     | `ARTICLES`                                                                   |
 | Home and Experience competencies | `WALL_GROUPS`, `skillsIn(..., 1)`                                            |
 | JSON-LD                          | `siteGraph`, `homeGraph`, `experienceGraph`, `projectsGraph`, `writingGraph` |

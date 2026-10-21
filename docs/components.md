@@ -153,6 +153,29 @@ Not currently mounted. The landing page originally closed with this section and
 now closes with `CoreCompetencies`; the component is kept as the authored layout
 for `FEATURED_PROJECTS` if the section returns.
 
+### `ProjectShowcase`
+
+The `/projects` body, from `PROJECT_SHELVES`. One Radix tab per group, each
+panel holding a stage and the group's full index.
+
+- **Stage.** Every stage project is rendered into one grid cell; inactive ones
+  are `inert`, `aria-hidden` and invisible, so the stage keeps the height of its
+  tallest project and nothing below moves. Arrows wrap at both ends and are not
+  rendered when a stage has one project. Left and right keys work only while
+  focus is inside the stage. WAI-ARIA carousel roles, with one polite live
+  region filled only by the reader's own action.
+- **No swipe.** `station-swipe.tsx` already owns horizontal drags for travel
+  between stations. To add stage swipe, add a `[data-swipe-ignore]` check beside
+  its `[role="dialog"]` check first.
+- **Hash.** Changing project calls `history.replaceState` with the slug. A
+  `hashchange` listener, plus a check on arrival, opens the matching tab and
+  project for `#<slug>` or `#<group-id>` and scrolls to the tabs.
+- **Index.** Every project in the group, newest first, on a shared subgrid so
+  columns line up. Staged names link to the stage and carry an "On stage" or
+  "Showing" marker.
+- Both panels are force-mounted so all projects are in the exported HTML. The
+  inactive panel is hidden, so without JavaScript only the first group shows.
+
 ### `ContactRoutes`
 
 A hairline-divided list of real contact routes:
