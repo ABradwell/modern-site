@@ -125,9 +125,21 @@ Details and constraints are in [`landscape.md`](landscape.md).
 
 ## Section components
 
+### `CoreCompetencies`
+
+The tier-1 technology wall, shared by the home page and Experience:
+
+- one category row per entry in `WALL_GROUPS`;
+- each row is a label plus `BrandMark` pills from `skillsIn(group.key, 1)`;
+- an empty group renders nothing.
+
+Rows rather than an equal-card grid, so each category stays as long or short as
+it actually is. Wall order and labels stay in `src/content/skills.ts`; this
+component only presents them.
+
 ### `FeaturedWork`
 
-Home-page asymmetric split:
+The former home-page asymmetric split:
 
 - lead project in the wider column;
 - project index directly beneath;
@@ -136,6 +148,10 @@ Home-page asymmetric split:
 The grid row template is intentional. A plain stretched column grew the lead
 card from its natural height to match the stacked pair. It uses
 `FEATURED_PROJECTS`, not all projects.
+
+Not currently mounted. The landing page originally closed with this section and
+now closes with `CoreCompetencies`; the component is kept as the authored layout
+for `FEATURED_PROJECTS` if the section returns.
 
 ### `ProjectShowcase`
 

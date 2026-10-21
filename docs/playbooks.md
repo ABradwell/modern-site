@@ -27,9 +27,9 @@ Do not duplicate a datum into a page file if it already exists in content.
 4. To put it on its group's stage, add the slug to `STAGE` in
    `src/content/projects.ts`. Position in that list is arrow order. A slug that
    matches no project throws during the build.
-5. If `featured: true`, confirm the home page's featured grid still reads well
-   with the new count. The home layout expects `FEATURED_PROJECTS`, not all
-   projects. `featured` and `STAGE` are independent.
+5. `featured` only affects `FEATURED_PROJECTS`, which no page currently mounts,
+   and is independent of `STAGE`. If a featured grid is reintroduced, check
+   that it reads well with the new count.
 6. Run `pnpm typecheck` and `pnpm build`.
 7. Check `out/projects/index.html`, `out/llms.txt` and the JSON-LD `ItemList`
    in `src/lib/schema.ts`. All three read `PROJECT_SHELVES`, so they follow
