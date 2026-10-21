@@ -79,9 +79,14 @@ and render HTML. Interactivity is isolated:
 | `Reveal`                               | Motion `whileInView`                               |
 | `error.tsx`, `global-error.tsx`        | React error boundaries require client components   |
 
-`LandscapeStatic` and `JsonLd` are server-renderable helpers. `LandscapeStatic`
-is used by the 404 and by the local error boundary fallback; it has no hooks and
-nothing that can throw while handling an earlier failure.
+`JsonLd` is a server-renderable helper. `LandscapeStatic` is used by the 404 and
+by the local error boundary fallback; it has no hooks and nothing that can throw
+while handling an earlier failure. It is a `'use client'` module even so: the
+layout passes it as the error boundary's fallback, and as a Server Component its
+whole panorama would be serialised into every page's RSC payload (about 300KB per
+navigation). As a client module the payload carries a reference, the panorama
+data comes from the bundle the animated landscape already loads, and it still
+server-renders to HTML for the 404's no-JS floor.
 
 ### Root composition order
 
@@ -106,7 +111,7 @@ landscape state continuous.
 
 `STATIONS` in `src/content/stations.ts` defines the order of the world. For a
 pathname, `stationIndex()` returns the matching station, a nested route's parent,
-or the forest for anything off-trail. `stationFor()` returns the station object.
+or Home's woods for anything off-trail. `stationFor()` returns the station object.
 
 `StationSwipe` derives a pan target from the current index and owns a Motion
 spring:
@@ -132,8 +137,9 @@ pathname -> stationIndex -> panTarget -> spring -> pan string -> Landscape
 distance. It resolves to `transform: none` at rest, so no permanent containing
 block or stacking context wraps the page.
 
-The vertical landscape is independent of the pan: each layer is fixed to the
-viewport and transformed by `-scrollY * SPEED[depth]`. See
+The vertical landscape is independent of the pan: each depth is one `Travel`
+layer inside a fixed band, moved by `-scrollY * SPEED[depth]`, and inside it one
+`PanStrip` carries that depth's row of the panorama, the whole trail long. See
 [`landscape.md`](landscape.md) for the full model.
 
 ## Theme flow
@@ -216,13 +222,13 @@ protections do not. See [`operations.md`](operations.md#security-headers-and-the
 
 ## What to change where
 
-| Intent                       | Start here                                                   | Also check                                            |
-| ---------------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
-| Copy, dates, roles, projects | `src/content`                                                | `docs/content.md`                                     |
-| A page's sections or layout  | `src/app/**/page.tsx`                                        | `templates` in `components/layout`                    |
-| The route order or nav       | `src/content/stations.ts`                                    | `scripts/lib/stations.mjs`, `src/lib/schema.ts`       |
-| Terrain shapes or depth      | `scripts/lib/terrain-config.mjs`, `terrain-grammars.mjs`     | `pnpm terrain`, `docs/landscape.md`                   |
-| Motion constants             | `src/lib/motion.ts`, `src/lib/station-geometry.ts`           | `docs/landscape.md`, reduced motion                   |
-| Colour, type, radii, z       | `src/app/globals.css`, `src/lib/type.ts`, `src/lib/z.ts`     | `scripts/check-contrast.mjs`, `docs/design-system.md` |
-| Headers or CSP               | `src/lib/csp.ts`, `public/_headers`, `vercel.json`           | `scripts/verify-export.mjs`                           |
-| Build or deploy              | `next.config.ts`, `.do/app.yaml`, `.github/workflows/ci.yml` | `docs/operations.md`                                  |
+| Intent                       | Start here                                                   | Also check                                                                      |
+| ---------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Copy, dates, roles, projects | `src/content`                                                | `docs/content.md`                                                               |
+| A page's sections or layout  | `src/app/**/page.tsx`                                        | `templates` in `components/layout`                                              |
+| The route order or nav       | `src/content/stations.ts`                                    | `scripts/lib/stations.mjs`, `src/lib/schema.ts`, `ROWS` in `terrain-config.mjs` |
+| Terrain shapes or depth      | `scripts/lib/terrain-config.mjs`, `terrain-grammars.mjs`     | `pnpm terrain -- --preview`, `docs/landscape.md`                                |
+| Motion constants             | `src/lib/motion.ts`, `src/lib/station-geometry.ts`           | `docs/landscape.md`, reduced motion                                             |
+| Colour, type, radii, z       | `src/app/globals.css`, `src/lib/type.ts`, `src/lib/z.ts`     | `scripts/check-contrast.mjs`, `docs/design-system.md`                           |
+| Headers or CSP               | `src/lib/csp.ts`, `public/_headers`, `vercel.json`           | `scripts/verify-export.mjs`                                                     |
+| Build or deploy              | `next.config.ts`, `.do/app.yaml`, `.github/workflows/ci.yml` | `docs/operations.md`                                                            |

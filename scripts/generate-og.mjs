@@ -12,10 +12,9 @@
  *
  *   node scripts/generate-og.mjs
  *
- * The card is drawn from the real forest terrain data, so it cannot drift away
- * from what the site actually looks like. Only the line-based layers are used,
- * since those are the ones that survive being scaled into a 1200x630 frame
- * without their curve control points needing re-derivation.
+ * The card is drawn from the real panorama, the woods at the Home station, so it
+ * cannot drift away from what the site actually looks like. It is flattened by
+ * the same renderer the terrain preview uses, then handed to Satori as one SVG.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -24,6 +23,8 @@ import { fileURLToPath } from 'node:url'
 
 import { ImageResponse } from 'next/og.js'
 
+import { LIGHT, renderWindow } from './lib/terrain-render.mjs'
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /**
@@ -31,11 +32,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
  * object literal out of it instead. That is safe here precisely because the file
  * is machine-written and its shape is fixed by the generator.
  */
-function loadTerrain() {
+function loadPanorama() {
   const src = readFileSync(resolve(root, 'src/content/terrain.generated.ts'), 'utf8')
-  const start = src.indexOf('= {', src.indexOf('export const TERRAIN'))
-  const end = src.lastIndexOf('} as const')
-  return JSON.parse(src.slice(start + 2, end + 1))
+  const start = src.indexOf('= {', src.indexOf('export const PANORAMA'))
+  return JSON.parse(src.slice(start + 2, src.lastIndexOf('}') + 1))
 }
 
 const W = 1200
@@ -54,76 +54,31 @@ const COLOUR = {
 const font = (file) =>
   readFileSync(resolve(root, 'node_modules/geist/dist/fonts/geist-sans', file))
 
-const terrain = loadTerrain()
-
 /**
- * One terrain band as a repeating background image.
- *
- * Satori supports background-image with a data URI and background-repeat, which
- * is the same mechanism the site itself uses, so the proportions here match the
- * page rather than approximating it.
- */
-function band(layer, topPx, crestPx) {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${layer.w} ${layer.h}'><path fill='${COLOUR.terrain[layer.fill]}' d='${layer.d}'/></svg>`
-  const uri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
-  const tileW = Math.round(crestPx * (layer.w / layer.h))
-
-  // The tile carries the crest and a short solid band at BASE_RATIO, but not the
-  // ground below it. On the site a gradient mask layer supplies that; here it has
-  // to be an explicit rectangle, or each band leaves a strip of bare sky beneath
-  // it and the whole card reads as floating cut-outs.
-  const groundTop = Math.round(topPx + 0.88 * crestPx)
-
-  return [
-    {
-      type: 'div',
-      props: {
-        style: {
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: topPx,
-          height: crestPx,
-          display: 'flex',
-        },
-        children: Array.from({ length: Math.ceil(W / tileW) + 1 }, (_, i) => ({
-          type: 'img',
-          props: { src: uri, width: tileW, height: crestPx, key: i },
-        })),
-      },
-    },
-    groundTop < H
-      ? {
-          type: 'div',
-          props: {
-            style: {
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: groundTop,
-              height: H - groundTop,
-              backgroundColor: COLOUR.terrain[layer.fill],
-            },
-          },
-        }
-      : null,
-  ].filter(Boolean)
-}
-
-const forest = terrain.forest.layers
-
-/**
- * Maps the site's dvh ladder onto the card. At 5.4 the nearest treetops land at
- * roughly 248px, which leaves the top 40 percent of the card clear for type and
- * puts the near band's ground line just inside the bottom edge.
+ * Maps scene units onto the card. At 5.4 the nearest treetops land at roughly
+ * 248px, which leaves the top 40 percent of the card clear for type and puts the
+ * near row's ground line just inside the bottom edge.
  */
 const SCALE = 5.4
-const bands = [4, 3, 2, 1].flatMap((depth) => {
-  const layer = forest.find((l) => l.depth === depth)
-  const crestPx = Math.round(layer.crest * SCALE)
-  const topPx = Math.round((layer.bottom - layer.crest) * SCALE)
-  return band(layer, topPx, crestPx)
+const terrain = renderWindow(loadPanorama(), {
+  x0: 0,
+  x1: 100,
+  width: W,
+  height: H,
+  pxPerVu: SCALE,
+  colours: { ...LIGHT, ...COLOUR.terrain },
 })
+const bands = [
+  {
+    type: 'img',
+    props: {
+      src: `data:image/svg+xml;base64,${Buffer.from(terrain).toString('base64')}`,
+      width: W,
+      height: H,
+      style: { position: 'absolute', left: 0, top: 0 },
+    },
+  },
+]
 
 const image = new ImageResponse(
   {
