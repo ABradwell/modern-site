@@ -1,4 +1,4 @@
-import type { Project } from './types'
+import type { Project, ProjectGroup } from './types'
 
 /**
  * Five, curated. The older work is undergraduate coursework and is presented as
@@ -11,6 +11,7 @@ export const PROJECTS: readonly Project[] = [
     slug: 'bradwell-music',
     name: 'Bradwell Music',
     year: 2025,
+    group: 'modern-work',
     summary:
       'A player for ten original tracks, built around a gramophone transport and shareable links.',
     detail:
@@ -29,6 +30,7 @@ export const PROJECTS: readonly Project[] = [
     slug: 'number-recognition',
     name: 'Number Recognition',
     year: 2022,
+    group: 'university-work',
     summary:
       'A convolutional network that finds and reads fixed-font numbers inside cluttered images.',
     detail:
@@ -47,6 +49,7 @@ export const PROJECTS: readonly Project[] = [
     slug: 'image-processor',
     name: 'Live-Feed Image Processor',
     year: 2021,
+    group: 'university-work',
     summary:
       'A webcam processor that stacks OpenCV filters live so you can see the combined result.',
     detail:
@@ -65,6 +68,7 @@ export const PROJECTS: readonly Project[] = [
     slug: 'hand-tracker',
     name: 'Hand Tracker',
     year: 2022,
+    group: 'university-work',
     summary: 'Live hand detection and motion tracking from an ordinary webcam.',
     detail:
       'Detection and per-frame motion tracking over a live capture, written while working out how far you can get with gesture input on hardware everybody already owns.',
@@ -84,6 +88,7 @@ export const PROJECTS: readonly Project[] = [
     slug: 'walk-in-clinic-simulation',
     name: 'Walk-In Clinic Simulation',
     year: 2022,
+    group: 'university-work',
     summary:
       'A statistical model of a real Nova Scotian walk-in clinic, used to test how it assigns doctors.',
     detail:
@@ -95,3 +100,42 @@ export const PROJECTS: readonly Project[] = [
 ] as const
 
 export const FEATURED_PROJECTS = PROJECTS.filter((p) => p.featured)
+
+/** Tab order on /projects. The first group is the one selected on arrival. */
+export const PROJECT_GROUPS: readonly ProjectGroup[] = [
+  { id: 'modern-work', label: 'Modern work', period: '2025 to now' },
+  { id: 'university-work', label: 'University work', period: '2021 to 2022' },
+]
+
+/**
+ * What goes on each group's stage, in arrow order.
+ *
+ * An ordered list rather than a flag on each project, because the order is part
+ * of the design and a boolean scattered across five objects cannot express it.
+ * Independent of `featured`, which still means the home page.
+ */
+const STAGE: readonly string[] = ['bradwell-music', 'number-recognition', 'hand-tracker']
+
+function bySlug(slug: string): Project {
+  const project = PROJECTS.find((p) => p.slug === slug)
+  // Throws during the static build, so a typo in STAGE never ships.
+  if (!project) throw new Error(`STAGE references unknown project "${slug}"`)
+  return project
+}
+
+export interface ProjectShelf {
+  readonly group: ProjectGroup
+  /** Stage projects, in STAGE order. */
+  readonly stage: readonly Project[]
+  /** Every project in the group, newest first. Includes the staged ones. */
+  readonly projects: readonly Project[]
+}
+
+/** Groups with nothing in them yet are dropped, so adding a group early is safe. */
+export const PROJECT_SHELVES: readonly ProjectShelf[] = PROJECT_GROUPS.map((group) => ({
+  group,
+  stage: STAGE.map(bySlug).filter((p) => p.group === group.id),
+  projects: PROJECTS.filter((p) => p.group === group.id).toSorted(
+    (a, b) => b.year - a.year,
+  ),
+})).filter((shelf) => shelf.projects.length > 0)

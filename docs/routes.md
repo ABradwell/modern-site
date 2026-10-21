@@ -73,18 +73,16 @@ The hero links to `CV_PDF` in `public/`. The PDF is also linked from `/cv`.
 
 ### `/projects` — Projects (mountains)
 
-A single section, **Built**, with exactly five project cards. The grid is
-weighted `3fr/2fr`, `2fr/3fr`, then full width, so the asymmetry is authored
-rather than achieved by inventing a sixth item.
+A single section, **Built**, rendered by `ProjectShowcase` from
+`PROJECT_SHELVES`. A tab per project group (Modern work, University work); each
+tab has a stage that shows one project at a time with previous and next arrows,
+then an index of every project in the group, newest first.
 
-Each card can show:
+A stage project shows its image, year, name, `summary`, `detail`, `credit`,
+stack names and links. Index rows show year, name, `summary` and links.
 
-- an image with explicit dimensions;
-- name and year;
-- `detail` prose;
-- `credit` where the work leans on another author's model or code;
-- stack names resolved from skill IDs;
-- repository and live links when present.
+`/projects/#<slug>` opens the matching tab and stage project; `#modern-work` and
+`#university-work` open a tab.
 
 Metadata: title `Projects`, canonical `/projects/`. JSON-LD is `projectsGraph`
 (`CollectionPage`, breadcrumb, `ItemList` of `SoftwareSourceCode`).

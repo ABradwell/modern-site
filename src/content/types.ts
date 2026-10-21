@@ -170,10 +170,29 @@ export interface Education {
   readonly honours: readonly string[]
 }
 
+export type ProjectGroupId = 'modern-work' | 'university-work'
+
+/**
+ * A shelf on the projects page. Each one is a tab with its own stage and index.
+ *
+ * Groups exist because the work comes from two different lives, and more of the
+ * recent one is on the way. A single list ordered by year said the same thing
+ * less clearly and put a 2021 coursework project one row from today's work.
+ */
+export interface ProjectGroup {
+  readonly id: ProjectGroupId
+  /** Tab label, e.g. "Modern work". */
+  readonly label: string
+  /** Shown beside the index heading, e.g. "2021 to 2022". */
+  readonly period: string
+}
+
 export interface Project {
   readonly slug: string
   readonly name: string
   readonly year: number
+  /** Required, so a project with no shelf is a compile error rather than missing. */
+  readonly group: ProjectGroupId
   /** Twenty-five words at most. */
   readonly summary: string
   readonly detail: string
