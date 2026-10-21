@@ -3,22 +3,14 @@
 import { motion, useReducedMotion, useScroll, type MotionValue } from 'motion/react'
 
 import { useStationPan } from '@/components/system/station-swipe'
-import { STATIONS } from '@/content/stations'
-import { TERRAIN } from '@/content/terrain.generated'
+import { PANORAMA } from '@/content/terrain.generated'
 import { SPEED } from '@/lib/motion'
-import {
-  GUTTER_VW,
-  SEAM_RAMP_PCT,
-  SLOT_VW,
-  SPAN_VW,
-  STRIP_VW,
-  stripPct,
-} from '@/lib/station-geometry'
+import { STRIP_VW } from '@/lib/station-geometry'
 import { Z } from '@/lib/z'
 
 import { SKY_CLASS, hazeStyle } from './atmosphere'
 import { Orb } from './Orb'
-import { BODY_DVH, terrainLayerStyle, waterStyle } from './terrain-mask'
+import { PanoramaRowSvg, PanoramaWaterSvg, panoramaRow } from './panorama'
 import { Travel, useTravelRange } from './travel'
 
 /**
@@ -55,14 +47,10 @@ import { Travel, useTravelRange } from './travel'
  * edges to slide, and a celestial body is effectively at infinity, so walking
  * east does not move it.
  *
- * ON PAINT ORDER AND LAYERS. Each depth is one Travel layer holding one strip
- * of every station's row at that depth, so a row is moved, never repainted:
- * scrolling moves the depth's layer and panning moves its strip, and both are
- * compositor transforms. It used to be the other way round, one strip per band
- * with every depth inside each station's slot, which put the whole band on a
- * single layer that had to be repainted on every frame of motion. Grouping by
- * depth also means that in a gutter each row fades into the matching row of the
- * next biome, and a far ridge never paints over a nearer row from the west.
+ * ON PAINT ORDER AND LAYERS. Each depth is one Travel layer holding one strip:
+ * that depth's row of the panorama, the whole trail long. A row is moved, never
+ * repainted: scrolling moves the depth's layer and panning moves its strip, and
+ * both are compositor transforms. See panorama.tsx for how the row is drawn.
  */
 export function Landscape() {
   const reduce = useReducedMotion() ?? false
@@ -122,58 +110,38 @@ export function Landscape() {
   )
 }
 
-type Biome = (typeof STATIONS)[number]['biome']
-
 // ---------------------------------------------------------------------------
 // Horizontal pan
 // ---------------------------------------------------------------------------
 
+// The generator lays the world out across a strip of its own width. If the
+// station list changes length without `pnpm terrain` being run, the pan would
+// stop landing on stations, so fail where it is noticed rather than on screen.
+if (PANORAMA.stripVw !== STRIP_VW) {
+  throw new Error(
+    `terrain is ${PANORAMA.stripVw}vw wide but stations span ${STRIP_VW}vw; run pnpm terrain`,
+  )
+}
+
 /**
- * Every station side by side, panned as one.
- *
- * Absolutely positioned rather than flexed, because the slots have to OVERLAP in
- * the gutters and flex children cannot. Later stations paint over earlier ones in
- * DOM order, which is the direction the fade needs.
- *
- * The fade is a mask on the slot, multiplying with the terrain masks inside it.
- * repeat-y rather than no-repeat is load-bearing: the mask box is the slot, which
- * is one viewport tall, while the near band's body runs to 130dvh. With no-repeat
- * everything past the bottom of the slot falls outside the mask and is cut off.
- * The gradient is uniform vertically, so tiling it costs nothing and covers every
- * overhang.
+ * The whole trail, panned as one.
  *
  * will-change keeps the strip on its own layer, so the pan slides pixels that
- * were rasterised once instead of repainting every mask on every frame.
+ * were rasterised once instead of redrawing the row on every frame.
  */
 function PanStrip({
   pan,
   children,
 }: {
   pan: MotionValue<string>
-  children: (biome: Biome) => React.ReactNode
+  children: React.ReactNode
 }) {
-  const seam = `linear-gradient(to right, transparent 0%, #000 ${SEAM_RAMP_PCT.toFixed(3)}%)`
-
   return (
     <motion.div
       className="absolute inset-y-0 left-0"
       style={{ x: pan, width: `${STRIP_VW}%`, willChange: 'transform' }}
     >
-      {STATIONS.map((station, i) => (
-        <div
-          key={station.href}
-          className="absolute inset-y-0"
-          style={{
-            left: `${stripPct(i * SPAN_VW - GUTTER_VW)}%`,
-            width: `${stripPct(SLOT_VW)}%`,
-            maskImage: seam,
-            maskSize: '100% 100%',
-            maskRepeat: 'repeat-y',
-          }}
-        >
-          {children(station.biome)}
-        </div>
-      ))}
+      {children}
     </motion.div>
   )
 }
@@ -183,19 +151,11 @@ function PanStrip({
 // ---------------------------------------------------------------------------
 
 /**
- * How deep a depth band's box runs, in scene units: the lowest ground line of
- * any layer plus the body it carries. 130 with the current camera.
- *
- * The box has to contain every row, because the seam mask on each slot clips
- * to the slot's box and the slot now travels with its depth. With a one-viewport
- * box, scrolling lifted that edge into view and cut the near body off along a
- * hard line instead of letting it dissolve.
+ * Every row's box runs PANORAMA.bandVu deep: the lowest ground line plus the
+ * body it carries, 130 with the current camera. Shallower and the near body is
+ * cut off along a hard line once the reader scrolls.
  */
-const BAND_DEPTH_VU =
-  Math.max(...Object.values(TERRAIN).flatMap((b) => b.layers.map((l) => l.bottom))) +
-  BODY_DVH
-
-const BAND_STYLE = { height: `calc(var(--vu) * ${BAND_DEPTH_VU})` } as const
+const BAND_STYLE = { height: `calc(var(--vu) * ${PANORAMA.bandVu})` } as const
 
 const SPEED_BY_DEPTH = {
   1: SPEED.terrain1,
@@ -204,7 +164,7 @@ const SPEED_BY_DEPTH = {
   4: SPEED.terrain4,
 } as const
 
-/** One depth across every station: its own vertical travel, one shared pan. */
+/** One depth of the panorama: its own vertical travel, the one shared pan. */
 function DepthBand({
   depth,
   pan,
@@ -225,16 +185,13 @@ function DepthBand({
       style={BAND_STYLE}
     >
       <PanStrip pan={pan}>
-        {(biome) => {
-          const layer = TERRAIN[biome].layers.find((l) => l.depth === depth)
-          return layer ? <div style={terrainLayerStyle(layer)} /> : null
-        }}
+        <PanoramaRowSvg row={panoramaRow(depth)} id={`land${depth}`} />
       </PanStrip>
     </Travel>
   )
 }
 
-/** The plains river. Only one station has water, so the other slots are empty. */
+/** The river and the lake it runs into. */
 function WaterBand({
   pan,
   scrollY,
@@ -253,10 +210,7 @@ function WaterBand({
       style={BAND_STYLE}
     >
       <PanStrip pan={pan}>
-        {(biome) => {
-          const water = TERRAIN[biome].river
-          return water ? <div style={waterStyle(water)} /> : null
-        }}
+        <PanoramaWaterSvg />
       </PanStrip>
     </Travel>
   )

@@ -1,25 +1,36 @@
 /**
  * Terrain grammars.
  *
- * Four shape languages, parameterised into the twenty silhouettes the site
- * needs (five biomes x four depth bands). Written as generators rather than
- * hand-drawn one-offs for three reasons: consistency of line across twenty
- * assets, a reviewable diff when a silhouette changes, and the ability to keep
- * path complexity falling with distance without doing that by hand.
+ * The shape languages the panorama is built from. Written as generators rather
+ * than hand-drawn one-offs for three reasons: consistency of line across a few
+ * hundred shapes, a reviewable diff when one changes, and the ability to keep
+ * complexity falling with distance without doing that by hand.
  *
  * On hand-authored decorative SVG generally: the governing design skill
  * discourages it and prefers generated or photographic imagery. That guidance
  * is overridden here under its own stated exception, "the brief explicitly
- * calls for it". The brief specifies a treeline and a five-biome landscape,
- * there is no image-generation tool in this toolchain, and photography cannot
- * deliver four independently parallaxing silhouette layers whose colour comes
+ * calls for it". The brief specifies a continuous landscape walked west to
+ * east, there is no image-generation tool in this toolchain, and photography
+ * cannot deliver independently parallaxing silhouette rows whose colour comes
  * from theme tokens. This was a decision, not a default.
  *
- * Every crest function returns an SVG path `d` for a tile that:
- *   - starts and ends on the baseline at the same y, so it repeats seamlessly;
- *   - keeps its lowest crest point above the viewBox bottom, leaving a solid
- *     band so the crest mask joins its gradient body layer without a seam;
- *   - never backtracks in x along the crest, so it cannot self-intersect.
+ * TWO KINDS OF SHAPE, and the split is the whole design.
+ *
+ *   SYMBOLS keep their proportions. A tree, a poplar, a hill or a mountain is
+ *   drawn once in its own viewBox and placed on the panorama by its centre, in
+ *   viewport widths, at a height in scene units. The browser scales it
+ *   uniformly, so a conifer is the same shape on a phone and on an ultrawide.
+ *   Every symbol here returns `{ w, h, d }` with its base on the bottom edge of
+ *   the viewBox and its highest point touching the top, so the height it is
+ *   placed at is the height it is seen at.
+ *
+ *   PROFILES stretch. Ground rolls, the shoulders under a range, the cloud sea
+ *   and the water are drawn straight in panorama units and scaled to the strip
+ *   with no aspect lock. They are things that lie in the ground plane or have
+ *   no characteristic proportion, so a phone squeezing them horizontally reads
+ *   as a different view of the same place rather than as a distortion. Profiles
+ *   are emitted in tenths of a viewport width across and tenths of a scene unit
+ *   down, as integers.
  */
 
 /** Deterministic xorshift32. Same seed, same terrain, every build, forever. */
@@ -33,316 +44,326 @@ export function rng(seed) {
   }
 }
 
-const r2 = (n) => Math.round(n * 10) / 10
-const pt = (x, y) => `${r2(x)} ${r2(y)}`
+const r1 = (n) => Math.round(n * 10) / 10
+/**
+ * Symbol coordinates are whole units. At SYMBOL_H that is well under a pixel
+ * for the tallest shape on the largest screen, and it keeps the payload small.
+ */
+const pt = (x, y) => `${Math.round(x)} ${Math.round(y)}`
 
-/** Baseline sits at 88% of tile height, leaving a solid band beneath the crest. */
-export const BASE_RATIO = 0.88
+/** Profile coordinates are integers in tenths: 1vw across is 10, 1 scene unit down is 10. */
+export const UNIT = 10
+const ip = (x, y) => `${Math.round(x * UNIT)} ${Math.round(y * UNIT)}`
+
+const smoothstep = (u) => u * u * (3 - 2 * u)
+
+/** Height every symbol is drawn at. Only the w / h ratio matters to the page. */
+export const SYMBOL_H = 160
 
 // ---------------------------------------------------------------------------
-// 1. CONIFERS. Forest. Sharp asymmetric spires, drooping boughs, dead snags.
+// Symbols
 // ---------------------------------------------------------------------------
-
-export function conifers(w, h, seed, { count, boughs, snags = 0, minH = 0.45 }) {
-  const rand = rng(seed)
-  const base = h * BASE_RATIO
-  const span = w / count
-  const snagAt = new Set()
-  while (snags > 0 && snagAt.size < snags) {
-    snagAt.add(1 + Math.floor(rand() * Math.max(1, count - 2)))
-  }
-
-  // The ground band first, then one closed subpath per tree.
-  //
-  // Trees are separate subpaths on purpose. Neighbours are allowed to overlap,
-  // because a treeline where every trunk is politely spaced reads as a fence,
-  // and under nonzero fill overlapping subpaths simply union. Emitting them as
-  // one continuous outline instead would make those overlaps self-intersections.
-  const cmds = [`M${pt(0, base)}L${pt(w, base)}L${pt(w, h)}L${pt(0, h)}Z`]
-
-  for (let i = 0; i < count; i += 1) {
-    // Every random draw happens here, before any branch, so the sequence does
-    // not depend on which trees turned out to be snags.
-    const cx = span * (i + 0.5) + (rand() - 0.5) * span * 0.24
-    const height = (base - h * 0.03) * (minH + rand() * (1 - minH))
-    const hw = span * (0.34 + rand() * 0.18)
-    const rTaper = 1.06 + rand() * 0.2
-    const rNotch = 0.46 + rand() * 0.14
-
-    const at = snagAt.has(i)
-      ? (x) => snag(x, base, height, hw)
-      : (x) => spire(x, base, height, hw, boughs, rTaper, rNotch)
-
-    cmds.push(at(cx))
-
-    // A crown that crosses a tile edge is drawn a SECOND time one tile over, so
-    // the two halves meet across the repeat. Without this the crown is simply
-    // clipped at the edge and the seam shows up as a vertical cut straight down
-    // the treeline, which is the one repeat artefact the eye finds immediately.
-    // Same device as the cloudbank's edge hummock, for the same reason.
-    if (cx - hw < 0) cmds.push(at(cx + w))
-    if (cx + hw > w) cmds.push(at(cx - w))
-  }
-
-  return cmds.join('')
-}
 
 /**
- * One conifer, as a closed subpath centred on `cx`.
+ * One conifer.
  *
  * The left flank climbs and the right flank descends with a different taper
  * exponent and notch depth, so no tree is symmetric. That asymmetry is what
  * stops a row reading as one stamp repeated. Boughs overhang, so the outline is
  * deliberately NOT monotonic in x; what keeps it a simple polygon is that y
  * moves strictly one way at every step.
+ *
+ * @param aspect width over height of the whole tree
+ * @param boughs bough tiers. Never 1: a single bough degenerates into a blunt
+ *               pentagon that reads as a hill, not a tree.
  */
-function spire(cx, base, height, hw, boughs, rTaper, rNotch) {
-  const apexY = base - height
-  const tree = [`M${pt(cx - hw, base)}`]
+export function conifer(seed, { aspect, boughs }) {
+  const rand = rng(seed)
+  const h = SYMBOL_H
+  const hw = (aspect * h) / 2
+  const rTaper = 1.06 + rand() * 0.2
+  const rNotch = 0.46 + rand() * 0.14
+  const cx = hw
+  const tree = [`M${pt(cx - hw, h)}`]
 
   for (let b = 0; b < boughs; b += 1) {
     const t = b / boughs
     const taper = (1 - t) ** 1.18
     const droop = 0.045 * (1 - t)
     // Outer point is the bough tip, inner point the shoulder at the trunk.
-    tree.push(`L${pt(cx - hw * taper, base - height * (t + droop))}`)
-    tree.push(`L${pt(cx - hw * taper * 0.66, base - height * (t + 0.62 / boughs))}`)
+    tree.push(`L${pt(cx - hw * taper, h - h * (t + droop))}`)
+    tree.push(`L${pt(cx - hw * taper * 0.66, h - h * (t + 0.62 / boughs))}`)
   }
-  tree.push(`L${pt(cx, apexY)}`)
+  tree.push(`L${pt(cx, 0)}`)
 
   for (let b = boughs - 1; b >= 0; b -= 1) {
     const t = b / boughs
     const taper = (1 - t) ** rTaper
-    tree.push(`L${pt(cx + hw * taper * rNotch, base - height * (t + 0.62 / boughs))}`)
-    tree.push(`L${pt(cx + hw * taper, base - height * (t + 0.04 * (1 - t)))}`)
+    tree.push(`L${pt(cx + hw * taper * rNotch, h - h * (t + 0.62 / boughs))}`)
+    tree.push(`L${pt(cx + hw * taper, h - h * (t + 0.04 * (1 - t)))}`)
   }
-  tree.push(`L${pt(cx + hw, base)}`, 'Z')
-  return tree.join('')
+  tree.push(`L${pt(cx + hw, h)}`, 'Z')
+  return { w: r1(2 * hw), h, d: tree.join('') }
 }
 
 /**
- * A dead snag: bare trunk, broken flat top. One per near layer at most, and its
- * job is to interrupt the rhythm of the spires around it.
+ * A dead snag: bare trunk, broken flat top. Rare, and its job is to interrupt
+ * the rhythm of the spires around it.
  */
-function snag(cx, base, height, hw) {
-  const apexY = base - height
-  const tw = hw * 0.16
-  return `M${pt(cx - tw, base)}L${pt(cx - tw, apexY + height * 0.06)}L${pt(cx + tw, apexY + height * 0.1)}L${pt(cx + tw, base)}Z`
+export function snag() {
+  const h = SYMBOL_H
+  const tw = h * 0.026
+  return {
+    w: r1(2 * tw),
+    h,
+    d: `M${pt(0, h)}L${pt(0, h * 0.06)}L${pt(2 * tw, 0)}L${pt(2 * tw, h)}Z`,
+  }
 }
 
-// ---------------------------------------------------------------------------
-// 2. GRASSLAND. Plains. Low soft undulation plus sentinel poplars. No spires.
-// ---------------------------------------------------------------------------
-
-export function grassland(w, h, seed, { rolls, amp, sentinels = 0 }) {
-  const rand = rng(seed)
-  const base = h * BASE_RATIO
-  const crest = base - h * amp * 0.5
-  const step = w / rolls
-
-  // Cubic rolls, starting and ending at the same y so the tile is seamless.
-  const cmds = [`M${pt(0, base)}`, `L${pt(0, crest)}`]
-  for (let i = 0; i < rolls; i += 1) {
-    const x0 = step * i
-    const x1 = step * (i + 1)
-    const lift = (rand() - 0.5) * h * amp * 0.6
-    const y1 = i === rolls - 1 ? crest : crest + lift
-    cmds.push(
-      `C${pt(x0 + step * 0.34, crest + lift * 0.5)} ${pt(x1 - step * 0.34, y1 - lift * 0.35)} ${pt(x1, y1)}`,
-    )
-  }
-  cmds.push(`L${pt(w, base)}`, `L${pt(w, h)}`, `L${pt(0, h)}`, 'Z')
-
-  // Sentinel poplars. Separate subpaths, so they union with the ground rather
-  // than cutting into it. These are what stop a plains band reading as a flat
-  // horizontal rule, and they carry the eye toward the river.
-  for (let t = 0; t < sentinels; t += 1) {
-    const tx = (w * (t + 0.5)) / sentinels + (rand() - 0.5) * (w / sentinels) * 0.5
-    const th = h * (0.34 + rand() * 0.3)
-    const tw = th * 0.13
-    cmds.push(
-      `M${pt(tx - tw, base)}Q${pt(tx - tw * 1.15, crest - th * 0.62)} ${pt(tx, crest - th)}Q${pt(tx + tw * 1.15, crest - th * 0.62)} ${pt(tx + tw, base)}Z`,
-    )
-  }
-
-  return cmds.join('')
+/** A lombardy poplar: the sentinel tree of open ground. Two quadratics, no tips. */
+function poplarPath(cx, base, height, rand) {
+  const tw = height * (0.11 + rand() * 0.04)
+  return `M${pt(cx - tw, base)}Q${pt(cx - tw * 1.15, base - height * 0.62)} ${pt(cx, base - height)}Q${pt(cx + tw * 1.15, base - height * 0.62)} ${pt(cx + tw, base)}Z`
 }
 
-// ---------------------------------------------------------------------------
-// 3. RIDGE. Foothills and mountains. Fractal midpoint displacement, angular.
-// ---------------------------------------------------------------------------
-
-export function ridge(w, h, seed, { peaks, amp, depth, roughness, smooth = false }) {
+export function poplar(seed) {
   const rand = rng(seed)
-  const base = h * BASE_RATIO
-  const usable = base - h * 0.03
+  const h = SYMBOL_H
+  // 0.15 * 1.15 is the widest the curve can bulge, so this box always holds it.
+  const w = h * 0.36
+  return { w: r1(w), h, d: poplarPath(w / 2, h, h, rand) }
+}
 
-  // Seed the profile with alternating summits and saddles.
-  let profile = []
-  for (let i = 0; i <= peaks * 2; i += 1) {
-    const x = (w * i) / (peaks * 2)
+/**
+ * A hill or a mountain, standing alone.
+ *
+ * Seeded with alternating summits and saddles, then roughened by midpoint
+ * displacement with an amplitude decaying by `roughness` per level, which is
+ * what separates a crag from a lump. Both ends ease down to the ground with a
+ * smoothstep, so a massif meets the ground at a slope rather than at a cliff.
+ * The profile is then normalised so its highest point touches the top of the
+ * viewBox: the height a massif is placed at is the height it stands.
+ *
+ * @param poplars optional trees standing on the massif, as fractions of its
+ *                width. Baked into the symbol rather than placed beside it,
+ *                because a tree positioned on the panorama would leave the
+ *                hillside the moment the viewport changed shape.
+ */
+export function massif(
+  seed,
+  { aspect, peaks, depth, roughness, smooth = false, saddle = 0.55, poplars = [] },
+) {
+  const rand = rng(seed)
+  const h = SYMBOL_H
+  const w = h * aspect
+
+  let profile = [{ x: 0, y: h }]
+  for (let i = 1; i < peaks * 2; i += 1) {
     const isPeak = i % 2 === 1
-    const height = isPeak ? usable * amp * (0.62 + rand() * 0.38) : usable * amp * 0.14
-    profile.push({ x, y: base - height })
+    const height = isPeak ? 0.62 + rand() * 0.38 : saddle * (0.5 + rand() * 0.4)
+    profile.push({ x: (w * i) / (peaks * 2), y: h - h * height })
   }
-  // Force the ends level so the tile repeats without a step.
-  const endY = base - usable * amp * 0.2
-  profile[0].y = endY
-  profile[profile.length - 1].y = endY
+  profile.push({ x: w, y: h })
 
-  // Midpoint displacement, amplitude decaying by `roughness` each level.
   for (let level = 0; level < depth; level += 1) {
     const decay = roughness ** (level + 1)
     const next = [profile[0]]
     for (let i = 1; i < profile.length; i += 1) {
       const a = profile[i - 1]
       const b = profile[i]
-      const mx = (a.x + b.x) / 2
-      const my = (a.y + b.y) / 2 - (rand() - 0.35) * usable * amp * decay
-      next.push({ x: mx, y: Math.max(h * 0.02, Math.min(base, my)) }, b)
+      const my = (a.y + b.y) / 2 - (rand() - 0.35) * h * 0.5 * decay
+      next.push({ x: (a.x + b.x) / 2, y: Math.max(0, Math.min(h, my)) }, b)
     }
     profile = next
   }
 
-  // Ease the outer tenth of the tile into the end height with a smoothstep,
-  // which has zero slope at the edge. Matching the HEIGHT at both ends is only
-  // half of a seamless repeat: matching the height but not the slope leaves a
-  // sharp V at every tile boundary, and against an otherwise organic profile
-  // that V is the only straight line in the picture, so it is exactly what the
-  // eye locks onto. Applied after displacement, so it cannot be undone by it.
-  const EDGE = 0.1
+  // Ease into the ground over the outer sixth of each side. Matching height at
+  // the foot is only half of it; a smoothstep also matches the slope, so the
+  // massif lands on the ground instead of standing on a knife edge.
+  const EDGE = 0.16
   for (const p of profile) {
     const u = Math.min(p.x, w - p.x) / (w * EDGE)
-    if (u < 1) p.y = endY + (p.y - endY) * (u * u * (3 - 2 * u))
+    if (u < 1) p.y = h - (h - p.y) * smoothstep(u)
   }
 
-  const cmds = [`M${pt(0, base)}`]
+  const top = Math.min(...profile.map((p) => p.y))
+  for (const p of profile) p.y = h - ((h - p.y) * h) / (h - top)
+
+  // Poplars stand on the surface. The surface is read off the polyline, which
+  // the smoothed curve hugs closely enough that a trunk sinking a hair into the
+  // hill is invisible, while one floating above it would not be.
+  const trees = poplars.map((at, i) => {
+    const x = w * at
+    const j = Math.max(
+      1,
+      profile.findIndex((p) => p.x >= x),
+    )
+    const a = profile[j - 1]
+    const b = profile[j]
+    const t = b.x === a.x ? 0 : (x - a.x) / (b.x - a.x)
+    const ground = a.y + (b.y - a.y) * t + h * 0.015
+    return { x, ground, height: h * (0.32 + rand() * 0.14 + i * 0.02) }
+  })
+
+  // A poplar near the summit can stand above it. Lift everything so the
+  // highest point of the symbol, tree or hill, still touches the top edge.
+  const lift = Math.max(0, ...trees.map((p) => p.height - p.ground))
+  const y = (v) => v + lift
+
+  const cmds = [`M${pt(0, y(h))}`]
   if (smooth) {
     // Quadratic through midpoints: every vertex becomes a control point and the
-    // curve passes through the midpoint of each pair. Rounds the whole profile
-    // without moving it, which is what separates a rolling foothill from a
-    // mountain crag while keeping one grammar. A smoothed curve stays inside
-    // the convex hull of its control points, so it cannot introduce a crossing
-    // the source polyline did not already have.
-    cmds.push(`L${pt(profile[0].x, profile[0].y)}`)
+    // curve passes through the midpoint of each pair. It stays inside the convex
+    // hull of its control points, so it cannot introduce a crossing.
     for (let i = 1; i < profile.length - 1; i += 1) {
       const a = profile[i]
       const b = profile[i + 1]
-      cmds.push(`Q${pt(a.x, a.y)} ${pt((a.x + b.x) / 2, (a.y + b.y) / 2)}`)
+      cmds.push(`Q${pt(a.x, y(a.y))} ${pt((a.x + b.x) / 2, y((a.y + b.y) / 2))}`)
     }
-    const last = profile[profile.length - 1]
-    cmds.push(`L${pt(last.x, last.y)}`)
+    cmds.push(`L${pt(w, y(h))}`)
   } else {
-    for (const p of profile) cmds.push(`L${pt(p.x, p.y)}`)
+    for (const p of profile.slice(1)) cmds.push(`L${pt(p.x, y(p.y))}`)
   }
-  cmds.push(`L${pt(w, base)}`, `L${pt(w, h)}`, `L${pt(0, h)}`, 'Z')
-  return cmds.join('')
+  cmds.push('Z')
+  for (const p of trees) cmds.push(poplarPath(p.x, y(p.ground), p.height, rand))
+
+  return { w: r1(w), h: r1(h + lift), d: cmds.join('') }
 }
 
 // ---------------------------------------------------------------------------
-// 4. CLOUDBANK. Distant haze and cloud sea. Quadratic mass, no tips at all.
+// Profiles
 // ---------------------------------------------------------------------------
 
 /**
- * @param lumps  number of hummocks across the tile
- * @param amp    crown height as a fraction of available height
- * @param spread how wide each hummock is relative to its slot. Below 1 the
- *               hummocks stay distinct; near 1 they merge into a plateau, which
- *               is what made an earlier cloud sea read as a stone shelf.
+ * Smooth one-dimensional noise from a handful of sines with seeded phases.
+ * Returns a function of x in viewport widths with output roughly in [-1, 1].
  */
-export function cloudbank(w, h, seed, { lumps, amp, spread = 0.72 }) {
-  const rand = rng(seed)
-  const base = h * BASE_RATIO
-  const step = w / lumps
+export function waves(rand, wavelengths) {
+  const parts = wavelengths.map((l) => ({
+    k: (2 * Math.PI) / (l * (0.8 + rand() * 0.4)),
+    phase: rand() * 2 * Math.PI,
+  }))
+  return (x) =>
+    parts.reduce((sum, p) => sum + Math.sin(p.k * x + p.phase), 0) / parts.length
+}
 
-  // Independent overlapping subpaths under nonzero fill, so hummocks may merge
-  // without cutting notches where they cross.
-  const cmds = [`M${pt(0, base)}L${pt(w, base)}L${pt(w, h)}L${pt(0, h)}Z`]
+/** 0 outside [from, to], easing to 1 over `ramp` viewport widths at each end. */
+export function envelope(x, from, to, ramp) {
+  const u = Math.min(x - from, to - x) / ramp
+  if (u <= 0) return 0
+  return u >= 1 ? 1 : smoothstep(u)
+}
 
-  /**
-   * One hummock. The crown is deliberately lopsided: the apex sits left of
-   * centre and the two arcs have different control heights, so a row of them
-   * does not read as a repeated dome.
-   */
-  const hummock = (cx, rw, rh) =>
-    `M${pt(cx - rw, base)}Q${pt(cx - rw * 0.55, base - rh * 1.24)} ${pt(cx - rw * 0.08, base - rh)}Q${pt(cx + rw * 0.52, base - rh * 0.84)} ${pt(cx + rw, base)}Z`
-
-  for (let i = 0; i < lumps; i += 1) {
-    const cx = step * (i + 0.5) + (rand() - 0.5) * step * 0.4
-    const rw = step * spread * (0.8 + rand() * 0.5)
-    // Wide height variation is what breaks up the crown. At a narrow range every
-    // hummock tops out at the same y and the union becomes a flat plateau.
-    const rh = (base - h * 0.04) * amp * (0.35 + rand() * 0.65)
-    cmds.push(hummock(cx, rw, rh))
+/**
+ * A closed profile standing on `base`, as a path in profile units.
+ *
+ * `top(x)` is the height above the base, in scene units. The outline is
+ * sampled every `step` viewport widths and smoothed by quadratics through the
+ * midpoints, then closed one unit below the base so it overlaps the row's body
+ * instead of leaving a hairline above it.
+ */
+export function profile(from, to, base, top, step = 2) {
+  const n = Math.max(2, Math.ceil((to - from) / step))
+  const pts = Array.from({ length: n + 1 }, (_, i) => {
+    const x = from + ((to - from) * i) / n
+    return { x, y: base - Math.max(0, top(x)) }
+  })
+  const cmds = [`M${ip(from, base + 1)}`, `L${ip(pts[0].x, pts[0].y)}`]
+  for (let i = 1; i < pts.length - 1; i += 1) {
+    const a = pts[i]
+    const b = pts[i + 1]
+    cmds.push(`Q${ip(a.x, a.y)} ${ip((a.x + b.x) / 2, (a.y + b.y) / 2)}`)
   }
-
-  // A hummock straddling the tile edge, drawn identically at x=0 and x=w.
-  // Without it the crown drops to the base line at every tile boundary and the
-  // repeat shows up as a row of vertical notches, which is exactly what it did.
-  const edgeW = step * spread * (0.8 + rand() * 0.5)
-  const edgeH = (base - h * 0.04) * amp * (0.35 + rand() * 0.65)
-  cmds.push(hummock(0, edgeW, edgeH), hummock(w, edgeW, edgeH))
-
+  const last = pts[pts.length - 1]
+  cmds.push(`L${ip(last.x, last.y)}`, `L${ip(to, base + 1)}`, 'Z')
   return cmds.join('')
 }
 
-// ---------------------------------------------------------------------------
-// 5. RIVER. The plains water band. A meander whose period divides the tile
-// width exactly, which makes it seamless by construction rather than by luck.
-// ---------------------------------------------------------------------------
-
 /**
- * @param periods   meanders per tile. Integer, or the tile will not repeat.
- * @param amp       meander excursion as a fraction of band height
- * @param thickness channel width at its nearest, as a fraction of band height
- * @param taper     channel width at its furthest, relative to its nearest.
+ * The cloud sea: a flat deck with billows on it.
  *
- * `taper` is the perspective. A river lies flat in the ground plane, so the
- * parts of it that sit higher in the band are further from the camera and have
- * to be narrower. Without it the channel is a constant-width ribbon, which reads
- * as a painted stripe rather than as water lying on a receding floor, and no
- * amount of moving the band up or down fixes that.
- *
- * Width is keyed to the meander phase, not to x, so the near-side bends run wide
- * and the far-side bends run narrow. That also keeps the seam exact: the phase
- * is zero at both tile edges, so both edges are the same width.
+ * Billows are independent lopsided hummocks under nonzero fill, so they merge
+ * where they overlap without cutting notches into each other. Wide height
+ * variation is what keeps the crown from reading as a stone shelf.
  */
-export function river(w, h, { periods, amp, thickness, taper = 1 }) {
-  const mid = h * 0.5
-  const a = h * amp
-  const steps = periods * 8
-  const seg = w / steps
-  const wave = (i) => a * Math.sin((i / steps) * periods * 2 * Math.PI)
-
-  // 0 at the top of the meander (furthest), 1 at the bottom (nearest).
-  const half = (i) => {
-    const t = a === 0 ? 1 : (wave(i) + a) / (2 * a)
-    return h * thickness * 0.5 * (taper + (1 - taper) * t)
-  }
-
-  const edge = (sign, forward) => {
-    const cmds = []
-    const idx = forward
-      ? Array.from({ length: steps }, (_, i) => i)
-      : Array.from({ length: steps }, (_, i) => steps - i)
-    for (const i of idx) {
-      const next = forward ? i + 1 : i - 1
-      const x0 = seg * i
-      const x1 = seg * next
-      const y0 = mid + wave(i) + sign * half(i)
-      const y1 = mid + wave(next) + sign * half(next)
+export function cloudSea(rand, { from, to, base, height, deck }) {
+  const cmds = [profile(from, to, base, (x) => deck * envelope(x, from, to, 8), 4)]
+  let x = from + 2
+  while (x < to - 2) {
+    const rw = 5 + rand() * 7
+    const env = envelope(x, from, to, 10)
+    const rh = height * (0.4 + rand() * 0.6) * env
+    if (rh > 0.5) {
       cmds.push(
-        `C${pt(x0 + (x1 - x0) * 0.42, y0)} ${pt(x1 - (x1 - x0) * 0.42, y1)} ${pt(x1, y1)}`,
+        `M${ip(x - rw, base + 1)}Q${ip(x - rw * 0.55, base - rh * 1.24)} ${ip(x - rw * 0.08, base - rh)}Q${ip(x + rw * 0.52, base - rh * 0.84)} ${ip(x + rw, base + 1)}Z`,
       )
     }
-    return cmds.join('')
+    x += rw * (0.9 + rand() * 0.5)
+  }
+  return cmds.join('')
+}
+
+/**
+ * The river and the lake it feeds, as one shape so they cannot fail to meet.
+ *
+ * A river lies IN the ground plane, so the parts of it that sit higher on the
+ * screen are further from the camera and must be narrower. Width is therefore
+ * keyed to the centreline's height above the horizon, which is ordinary linear
+ * perspective: apparent size is proportional to distance below the horizon.
+ *
+ * The lake is a superellipse with a wavering far shore. The river runs into
+ * its tapered west end, and under nonzero fill the overlap is simply a union.
+ */
+export function water(rand, { horizon, river, lake }) {
+  const meander = waves(rand, river.wavelengths)
+  const centre = (x) => {
+    // Ease the channel onto the lake's own centreline as it reaches the mouth,
+    // so the river enters the lake rather than meeting its shore at an angle.
+    const t = smoothstep(Math.min(1, Math.max(0, (x - (river.to - 14)) / 14)))
+    return river.y + meander(x) * river.swing * (1 - t) + (lake.y - river.y) * t
+  }
+  const halfWidth = (x, y) => {
+    const source = smoothstep(Math.min(1, (x - river.from) / 6))
+    return (y - horizon) * river.width * source
   }
 
-  return [
-    `M${pt(0, mid + wave(0) - half(0))}`,
-    edge(-1, true),
-    `L${pt(w, mid + wave(steps) + half(steps))}`,
-    edge(1, false),
-    'Z',
-  ].join('')
+  const n = Math.ceil((river.to - river.from) / 1.5)
+  const xs = Array.from(
+    { length: n + 1 },
+    (_, i) => river.from + ((river.to - river.from) * i) / n,
+  )
+  const far = xs.map((x) => {
+    const y = centre(x)
+    return [x, y - halfWidth(x, y)]
+  })
+  const near = xs.map((x) => {
+    const y = centre(x)
+    return [x, y + halfWidth(x, y)]
+  })
+  const channel = [...far, ...near.reverse()]
+
+  const shore = waves(rand, [9, 17])
+  const m = Math.ceil((lake.to - lake.from) / 1.5)
+  const span = (lake.to - lake.from) / 2
+  const mid = (lake.from + lake.to) / 2
+  const lakeAt = (i) => lake.from + ((lake.to - lake.from) * i) / m
+  const reach = (x) => {
+    const u = Math.min(1, Math.abs(x - mid) / span)
+    return (1 - u ** 2.6) ** (1 / 2.6)
+  }
+  const top = Array.from({ length: m + 1 }, (_, i) => {
+    const x = lakeAt(i)
+    return [x, lake.y - (lake.half + shore(x) * lake.waver) * reach(x)]
+  })
+  const bottom = Array.from({ length: m + 1 }, (_, i) => {
+    const x = lakeAt(m - i)
+    return [x, lake.y + lake.half * 1.15 * reach(x)]
+  })
+  const basin = [...top, ...bottom]
+
+  const poly = (points) => `M${points.map(([x, y]) => ip(x, y)).join('L')}Z`
+  return {
+    d: poly(channel) + poly(basin),
+    farthest: Math.min(...[...far, ...top].map(([, y]) => y)),
+  }
 }

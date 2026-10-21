@@ -450,6 +450,20 @@
   }
 }
 
+/* Level of detail for the panorama.
+
+   Shapes are placed in viewport widths and sized in scene units, so as the
+   viewport narrows toward 7:5 they stand closer together. Below it, every other
+   shape is detail and is hidden; narrower still, shapes scale down with the
+   width (see panorama.tsx) and their spacing holds. 7:5 sits between common
+   tablet and laptop shapes so neither lands on the threshold. Mirrors maxLod in
+   scripts/lib/terrain-render.mjs. */
+@media (max-aspect-ratio: 7/5) {
+  .lod-1 {
+    display: none;
+  }
+}
+
 /* ---------------------------------------------------------------------------
    8. REDUCED MOTION
 

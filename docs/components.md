@@ -9,7 +9,7 @@ changing it; most files carry a comment explaining the constraint they encode.
 src/app/                 routes, metadata routes, global error/404, CSS
 src/components/
   brand/                 skill pills and the Simple Icons registry
-  landscape/             the scene, static scene, terrain masks, orb, grain
+  landscape/             the scene, static scene, panorama renderer, travel, orb, grain
   layout/                header, navs, footer, hero and section shells
   sections/              page-level content blocks reused by pages
   system/                motion, theme, JSON-LD, errors, swipe
@@ -35,7 +35,7 @@ src/lib/                 pure helpers and constants
 | `src/app/robots.ts`         | Named AI-agent allow list                                                                                 |
 | `src/app/manifest.ts`       | Web app manifest                                                                                          |
 | `src/app/llms.txt/route.ts` | Plain-text site digest                                                                                    |
-| `src/app/globals.css`       | Tokens, themes, scene units, base styles, reduced motion                                                  |
+| `src/app/globals.css`       | Tokens, themes, scene units, base styles, landscape travel and level of detail, reduced motion            |
 
 ## Layout components
 
@@ -112,14 +112,15 @@ and has no looping animation.
 
 ## Landscape components
 
-| Component         | Responsibility                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `Landscape`       | The live scene. Far and near fixed bands, pan strip, depth layers, sky/haze/orb/water. Mounted in the root layout. |
-| `LandscapeStatic` | One composed, server-rendered frame with no hooks. Used by 404 and the local landscape error fallback.             |
-| `Orb`             | Sun/moon. Scrolls vertically only; no horizontal pan, no ambient loop.                                             |
-| `Grain`           | Fixed inline-SVG noise, `pointer-events-none`, `Z.grain`.                                                          |
-| `atmosphere.ts`   | `SKY_CLASS`, `hazeStyle()`, orb classes and gradients. Shared by live and static scenes.                           |
-| `terrain-mask.ts` | `terrainLayerStyle()` and `waterStyle()`: SVG mask tiles plus body gradients.                                      |
+| Component         | Responsibility                                                                                                                                                                                                                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Landscape`       | The live scene. Far and near fixed bands; one `Travel` layer and one `PanStrip` per depth, plus sky/haze/orb/water. Mounted in the root layout. Throws if `PANORAMA.stripVw !== STRIP_VW`.                                                                                                                  |
+| `LandscapeStatic` | One composed frame with no hooks, parked at the station with `translateX(panTarget(i)%)`. A `'use client'` module so the fallback is not serialised into every RSC payload. Uses `still*` id prefixes because the 404 renders it alongside `Landscape`. Used by 404 and the local landscape error fallback. |
+| `panorama.tsx`    | `PanoramaRowSvg`, `PanoramaWaterSvg` and `panoramaRow()`: pure inline-SVG render of one row or the water, shared by the live and static scenes.                                                                                                                                                             |
+| `travel.tsx`      | `Travel` and `useTravelRange()`: vertical travel per layer, on the scroll timeline where supported and Motion otherwise.                                                                                                                                                                                    |
+| `Orb`             | Sun/moon. Scrolls vertically only; no horizontal pan, no ambient loop.                                                                                                                                                                                                                                      |
+| `Grain`           | Fixed inline-SVG noise, `pointer-events-none`, `Z.grain`.                                                                                                                                                                                                                                                   |
+| `atmosphere.ts`   | `SKY_CLASS`, `hazeStyle()`, orb classes and gradients. Shared by live and static scenes.                                                                                                                                                                                                                    |
 
 Details and constraints are in [`landscape.md`](landscape.md).
 
@@ -279,14 +280,14 @@ tech tags; `TAG` in `src/lib/type.ts` is the site's tag treatment.
 
 ## Ownership rules
 
-| If you change…                     | Also check…                                                           |
-| ---------------------------------- | --------------------------------------------------------------------- |
-| `TrailNav` or `MobileNav`          | `STATIONS`, `EXTERNAL_LINKS`, active/current semantics                |
-| `StationHero`                      | every page's `h1 id`, content offset, near terrain cap                |
-| `StationContent`/`Section`         | anchor targets in page CTAs and `ScrollCue`                           |
-| `Landscape`                        | `LandscapeStatic`, atmosphere/mask helpers, reduced motion, z-index   |
-| `StationSwipe`                     | station geometry, prefetch, content transform, mobile nav scroll lock |
-| `Reveal`                           | motion tokens and `prefers-reduced-motion`                            |
-| `BrandMark`                        | registry, `Skill.icon`, contrast of `--logo-ink`                      |
-| `RoleDeliveries`/`RoleProgression` | the `Role` type, Experience and CV views                              |
-| `globals.css`                      | contrast script, Tailwind `@theme inline`, both themes                |
+| If you change…                     | Also check…                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| `TrailNav` or `MobileNav`          | `STATIONS`, `EXTERNAL_LINKS`, active/current semantics                 |
+| `StationHero`                      | every page's `h1 id`, content offset, near terrain cap                 |
+| `StationContent`/`Section`         | anchor targets in page CTAs and `ScrollCue`                            |
+| `Landscape`                        | `LandscapeStatic`, `panorama.tsx`, atmosphere, reduced motion, z-index |
+| `StationSwipe`                     | station geometry, prefetch, content transform, mobile nav scroll lock  |
+| `Reveal`                           | motion tokens and `prefers-reduced-motion`                             |
+| `BrandMark`                        | registry, `Skill.icon`, contrast of `--logo-ink`                       |
+| `RoleDeliveries`/`RoleProgression` | the `Role` type, Experience and CV views                               |
+| `globals.css`                      | contrast script, Tailwind `@theme inline`, both themes                 |

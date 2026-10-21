@@ -1,11 +1,13 @@
+import { STATIONS } from './stations.mjs'
+
 /**
- * The camera, and the twenty silhouettes it looks at.
+ * The camera, and the route it looks along.
  *
  * =========================================================================
  * THE CAMERA
  * =========================================================================
  *
- * Everything about how much depth a biome reads with comes down to one thing:
+ * Everything about how much depth the landscape reads with comes down to one thing:
  * how far apart the rows' GROUND LINES sit. That distance is the camera angle.
  *
  * A camera at eye level sees the ground plane almost edge-on, so every row's
@@ -76,266 +78,381 @@ const round1 = (n) => Math.round(n * 10) / 10
 
 /**
  * =========================================================================
- * TILE GEOMETRY
+ * THE STRIP
  * =========================================================================
  *
- * `w` and `h` are viewBox units, so only their ratio matters. Each tile is
- * delivered as a CSS mask sized `auto <crest>`, which means:
+ * The panorama is one strip, read west to east, as wide as every station plus
+ * its gutter. Mirrors src/lib/station-geometry.ts, which the page uses to aim
+ * the pan; the generator emits STRIP_VW into the generated file and the
+ * landscape checks the two agree.
  *
- *     rendered tile width      = crest_px * (w / h)
- *     rendered element width   = rendered tile width / count
- *     rendered element aspect  = 0.85 * count * h / w
+ * At rest, station i fills the window [116i, 116i + 100] in viewport widths:
  *
- * Two numbers have to be right at once, and getting one of them backwards is
- * what made an earlier version of this file read as wallpaper.
+ *     Home [0, 100]   Experience [116, 216]   Projects [232, 332]   Writing [348, 448]
  *
- *   1. ELEMENT ASPECT, held near 2.4 for every conifer band. That is what makes
- *      a distant tree the same SHAPE as a near one rather than a squashed
- *      version of it. It depends only on count and ratio, NOT on crest, so
- *      element width is fixed the moment those two are chosen and `count` is
- *      free to be used for the second constraint below at no visual cost.
- *
- *   2. RENDERED TILE WIDTH, kept around 550 to 1600px so no band repeats more
- *      than about two and a half times across a desktop viewport. Distant bands
- *      have the smallest crests, so they need the WIDEST viewBox aspect to still
- *      produce a wide tile. The ratios below therefore increase with distance:
- *      3.30, 4.30, 5.30, 6.40. An earlier version had them decreasing, which
- *      made the far bands repeat five to eight times and the repetition was the
- *      first thing the eye found.
- *
- * The four ratios are mutually non-integer, so no two bands re-phase into a
- * visible beat at any viewport width.
- *
- * Height is the same 240 for all four on purpose. Only the ratio is meaningful,
- * so varying both numbers only ever hid what was being changed.
+ * Every x in this file is in those units.
  */
-export const BANDS = [
-  { depth: 1, w: 792, h: 240 }, // ratio 3.30
-  { depth: 2, w: 1032, h: 240 }, // ratio 4.30
-  { depth: 3, w: 1272, h: 240 }, // ratio 5.30
-  { depth: 4, w: 1536, h: 240 }, // ratio 6.40
-]
+export const SPAN_VW = 116
+export const STRIP_VW = STATIONS.length * SPAN_VW
 
 /** The viewport the build log's px figures are quoted at. A common laptop. */
 export const REFERENCE = { width: 1440, height: 900 }
 
 /**
- * =========================================================================
- * THE BIOMES
- * =========================================================================
+ * The viewport shape the panorama is designed at, width over scene height.
  *
- * Grammars are mixed WITHIN a biome, not only between them, because four scaled
- * copies of one shape is exactly how a generated landscape gives itself away.
- *
- * Element counts rise steeply with distance. That is not decoration: it is what
- * holds element aspect constant while the crest shrinks, and it is also correct
- * atmospheric perspective, since a distant treeline resolves into a fine
- * serration rather than into individual trees.
- *
- * `lift` departs from strict perspective. `fill` overrides which rung of the
- * colour ramp a layer takes; it is used once, at the above-cloud station, where
- * the cloud sea has to be paler than the rock standing behind it.
+ * Positions are in viewport widths and sizes in scene units, so the shape of
+ * the viewport decides how closely things stand. This is the shape at which
+ * the spacings below are exactly as written; level of detail (see LOD in
+ * globals.css) holds the density within a factor of two of it everywhere else.
  */
-export const BIOMES = {
-  forest: {
-    label: 'Forest',
-    // One species, one height, so no lifts: pure 1 / d falloff. Ground lines at
-    // 106 / 93.5 / 84.3 / 77.4dvh, which leaves 8.9, 6.5 and 4.9dvh of open
-    // ground showing between successive rows. Those three numbers are the whole
-    // effect, and the generator asserts them.
-    nearCrest: 30,
-    layers: [
-      // Bough counts fall 5 / 4 / 3 / 2 and never reach 1: a single bough
-      // degenerates into a blunt pentagon that reads as a hill, not a tree.
-      { grammar: 'conifers', seed: 1741, count: 9, boughs: 5, snags: 1, minH: 0.5 },
-      { grammar: 'conifers', seed: 2939, count: 12, boughs: 4, minH: 0.46 },
-      { grammar: 'conifers', seed: 3907, count: 15, boughs: 3, minH: 0.44 },
-      { grammar: 'conifers', seed: 4831, count: 18, boughs: 2, minH: 0.42 },
-    ],
-  },
+export const DESIGN_ASPECT = 1.75
 
-  plains: {
-    label: 'Plains',
-    nearCrest: 24,
-    layers: [
-      // Sentinel poplars break the horizontal so the near bands do not read as a
-      // set of stacked rules, and they give the eye something to measure the
-      // ground plane against.
-      { grammar: 'grassland', seed: 5197, rolls: 5, amp: 0.34, sentinels: 4 },
-      { grammar: 'grassland', seed: 6143, rolls: 6, amp: 0.4, sentinels: 6 },
-      // Far rises, smoothed so they are landform rather than crag.
-      {
-        grammar: 'ridge',
-        seed: 7013,
-        lift: 1.15,
-        peaks: 6,
-        amp: 0.5,
-        depth: 2,
-        roughness: 0.38,
-        smooth: true,
-      },
-      { grammar: 'cloudbank', seed: 8087, lift: 1.3, lumps: 9, amp: 0.5, spread: 0.6 },
-    ],
-    /**
-     * The river.
-     *
-     * A river lies IN the ground plane, which is the entire reason it needed the
-     * camera fixed before it could work. It now sits in the open ground between
-     * the near grass and the row behind: the band spans 93 to 104dvh, so its far
-     * bank meets the foot of the second row's rises at 93.5dvh and its near bank
-     * tucks under the near grass, whose solid ground starts at 103.1dvh.
-     *
-     * `taper` is the perspective cue that makes it read as water on a receding
-     * plane rather than as a horizontal ribbon: the channel narrows where it
-     * sits higher in the band, because higher in the band is further away.
-     *
-     * It also has to be painted IN FRONT OF row 2, not behind it. Behind, row
-     * 2's solid ground hides it completely, which is what an earlier version did
-     * and why the river kept having to be shoved up into the sky to be seen.
-     */
-    river: {
-      w: 900,
-      h: 130,
-      bottom: 104,
-      height: 11,
-      periods: 2,
-      amp: 0.18,
-      thickness: 0.5,
-      taper: 0.42,
-    },
-  },
+/**
+ * How far a row's solid ground extends below its own ground line, and the
+ * fraction of that which stays solid before it dissolves.
+ *
+ * This is a BAND, not a floor. An earlier version ran every layer down to a
+ * fixed 168dvh, which gave the near row a 60dvh slab of solid colour that swept
+ * up and filled the window a few hundred pixels into the scroll, because the
+ * near row travels faster than the page. At 24 it still overhangs the top of the
+ * page content, so content passes behind the canopy, but it clears the window.
+ * The dissolve starts early on purpose: a long, soft fade is what makes content
+ * look like it comes out from under the trees rather than from behind a slab.
+ */
+export const BODY_VU = 24
+export const SOLID_TO = 0.4
 
-  foothills: {
-    label: 'Foothills',
-    nearCrest: 30,
-    // Rolling rather than craggy: `smooth` rounds every vertex, which is what
-    // separates this station from the mountains without a second grammar. Lifts
-    // rise with distance because a receding range of hills does not shrink as
-    // fast as one hill would: the ones behind are bigger hills.
-    layers: [
+/**
+ * Where a row's trees and rocks stand, as a fraction of its nominal crest above
+ * its ground line. The strip between the two is solid ground, which is the
+ * floor the eye sees between one row and the next.
+ */
+export const GROUND = 0.12
+
+/**
+ * The highest anything in the near row may reach, in scene units. The hero's
+ * copy has to finish above it at every height down to the --scene floor; see
+ * globals.css.
+ */
+export const NEAR_TOP = 76
+
+/**
+ * =========================================================================
+ * THE ROUTE
+ * =========================================================================
+ *
+ * One world, walked west to east. Each row is a list of regions, and regions
+ * overlap: where the woods thin, the meadow is already underneath them, so an
+ * edge is a change of density rather than a seam. Rows change at DIFFERENT
+ * places on purpose. Walking out of a forest, the trees beside you end first
+ * and the far treeline carries on, so the near row opens into the clearing
+ * while the rows behind are still woods.
+ *
+ *   HOME        Deep woods. Four rows of conifers, no open ground but the floor.
+ *   EXPERIENCE  The near trees thin out and give way to a meadow. A river comes
+ *               out from under them and winds east across the clearing, past
+ *               poplars, with the woods still standing on its far side and
+ *               distant hills rising behind them.
+ *   PROJECTS    The river runs behind a low hill and opens into a lake at the
+ *               foot of the mountains.
+ *   WRITING     The ground climbs into rock, and above it the valley is filled
+ *               with cloud, with distant summits standing clear of it.
+ *
+ * Region kinds:
+ *
+ *   forest  conifers, placed one by one. `density` is a list of [x, d] keys,
+ *           read as 1 before the first key and linear between them. Low density
+ *           spaces trees out and shortens them, which is how a forest edge
+ *           actually reads.
+ *   meadow  a low rolling ground profile, with lombardy poplars `every` so many
+ *           viewport widths.
+ *   massif  one standing hill, with poplars baked into it.
+ *   range   a run of mountains: one massif per peak, unique, on a shoulder of
+ *           continuous ground so the range never shows sky between its feet.
+ *   cloud   the cloud sea, as a profile.
+ *
+ * `crest` is the tallest a region's shapes may stand above its ground line
+ * before GROUND is taken off. Wherever it describes a row of one kind of thing,
+ * conifers or a mountain range, it comes from apparentCrest, so it falls off
+ * with distance at the camera's rate; `lift` is what lets a far range stand
+ * taller than the ridge in front of it.
+ * `fill` overrides which rung of the colour ramp a region takes; it is used
+ * where the cloud sea has to be paler than the rock standing behind it.
+ */
+export const ROWS = [
+  {
+    depth: 1,
+    nominalCrest: apparentCrest(30, 0),
+    regions: [
       {
-        grammar: 'ridge',
-        seed: 9109,
-        peaks: 4,
-        amp: 0.6,
-        depth: 3,
-        roughness: 0.42,
-        smooth: true,
+        kind: 'forest',
+        seed: 1741,
+        from: -24,
+        to: 134,
+        crest: apparentCrest(30, 0),
+        boughs: 5,
+        minH: 0.5,
+        snags: 0.05,
+        density: [
+          [90, 1],
+          [104, 0.6],
+          [116, 0.28],
+          [128, 0.1],
+          [134, 0],
+        ],
       },
       {
-        grammar: 'ridge',
-        seed: 10133,
-        lift: 1.05,
-        peaks: 5,
-        amp: 0.66,
+        kind: 'meadow',
+        seed: 5197,
+        from: 98,
+        to: 214,
+        rise: 3.4,
+        poplars: { every: 24, height: [9, 15] },
+      },
+      {
+        // The hill the river runs behind. It sits in the gutter between
+        // Experience and Projects, so at rest it is the right-hand edge of the
+        // clearing and the left-hand edge of the lake.
+        kind: 'massif',
+        seed: 5233,
+        at: 222,
+        height: 17,
+        aspect: 3.1,
+        peaks: 2,
         depth: 3,
         roughness: 0.4,
+        saddle: 0.8,
         smooth: true,
+        poplars: [0.58, 0.66],
       },
       {
-        grammar: 'ridge',
+        // The lake shore. Low, so the water reads across it.
+        kind: 'meadow',
+        seed: 5309,
+        from: 210,
+        to: 344,
+        rise: 1.1,
+        poplars: { every: 44, height: [7, 11] },
+      },
+      {
+        kind: 'range',
+        seed: 17401,
+        from: 334,
+        to: 490,
+        crest: apparentCrest(30, 0),
+        aspect: [1.9, 2.6],
+        peaks: 2,
+        depth: 3,
+        roughness: 0.5,
+        shoulder: 7,
+      },
+    ],
+  },
+  {
+    depth: 2,
+    nominalCrest: apparentCrest(30, 1),
+    regions: [
+      {
+        kind: 'forest',
+        seed: 2939,
+        from: -24,
+        to: 164,
+        crest: apparentCrest(30, 1),
+        boughs: 4,
+        minH: 0.46,
+        density: [
+          [118, 1],
+          [132, 0.6],
+          [146, 0.25],
+          [158, 0.08],
+          [164, 0],
+        ],
+      },
+      {
+        kind: 'meadow',
+        seed: 6143,
+        from: 124,
+        to: 222,
+        rise: 2,
+        poplars: { every: 28, height: [5.5, 9] },
+      },
+      {
+        kind: 'range',
+        seed: 12203,
+        from: 198,
+        to: 256,
+        crest: 18,
+        aspect: [2.8, 3.6],
+        peaks: 1,
+        depth: 3,
+        roughness: 0.42,
+        smooth: true,
+        shoulder: 4,
+      },
+      {
+        kind: 'range',
+        seed: 15331,
+        from: 240,
+        to: 346,
+        crest: apparentCrest(34, 1, 1.3),
+        aspect: [2, 2.9],
+        peaks: 2,
+        depth: 3,
+        roughness: 0.46,
+        shoulder: 8,
+      },
+      {
+        kind: 'range',
+        seed: 18427,
+        from: 338,
+        to: 490,
+        crest: apparentCrest(30, 1, 1.35),
+        aspect: [2, 2.8],
+        peaks: 2,
+        depth: 3,
+        roughness: 0.45,
+        shoulder: 8,
+      },
+    ],
+  },
+  {
+    depth: 3,
+    nominalCrest: apparentCrest(30, 2),
+    regions: [
+      {
+        // The far side of the clearing stays wooded well past the near edge.
+        kind: 'forest',
+        seed: 3907,
+        from: -24,
+        to: 216,
+        crest: apparentCrest(30, 2),
+        boughs: 3,
+        minH: 0.44,
+        density: [
+          [150, 1],
+          [180, 0.75],
+          [200, 0.35],
+          [212, 0.1],
+          [216, 0],
+        ],
+      },
+      {
+        kind: 'range',
         seed: 11197,
-        lift: 1.2,
-        peaks: 7,
-        amp: 0.6,
+        from: 186,
+        to: 244,
+        crest: 15,
+        aspect: [2.8, 3.8],
+        peaks: 2,
         depth: 3,
         roughness: 0.38,
         smooth: true,
+        shoulder: 3,
       },
       {
-        grammar: 'ridge',
-        seed: 12203,
-        lift: 1.4,
-        peaks: 9,
-        amp: 0.52,
-        depth: 2,
-        roughness: 0.42,
-        smooth: true,
-      },
-    ],
-  },
-
-  mountains: {
-    label: 'Mountains',
-    nearCrest: 34,
-    // Summits at 72 / 60.8 / 52.6 / 47.1dvh, so the far range stands highest.
-    // That is how a range actually reads: taller mountains seen over a nearer
-    // ridge, not one ridge drawn four times. The lifts are steep for exactly
-    // that reason, and they are the honest version of it: apparent height still
-    // FALLS with distance, just more slowly than 1 / d. Angular, never smoothed.
-    layers: [
-      { grammar: 'ridge', seed: 13297, peaks: 4, amp: 0.74, depth: 4, roughness: 0.52 },
-      {
-        grammar: 'ridge',
+        kind: 'range',
         seed: 14323,
-        lift: 1.3,
-        peaks: 5,
-        amp: 0.86,
+        from: 226,
+        to: 352,
+        crest: apparentCrest(34, 2, 1.7),
+        aspect: [2, 2.9],
+        peaks: 2,
         depth: 3,
         roughness: 0.5,
+        shoulder: 9,
       },
       {
-        grammar: 'ridge',
-        seed: 15331,
-        lift: 1.7,
-        peaks: 7,
-        amp: 0.9,
-        depth: 3,
-        roughness: 0.46,
-      },
-      {
-        grammar: 'ridge',
-        seed: 16381,
-        lift: 2.2,
-        peaks: 8,
-        amp: 0.82,
-        depth: 3,
-        roughness: 0.5,
-      },
-    ],
-  },
-
-  abovecloud: {
-    label: 'Above the cloud line',
-    nearCrest: 30,
-    // A high pass, not a view straight down onto cloud. Dark rock near, a pale
-    // cloud sea filling the valley, distant summits standing above it.
-    //
-    // The cloud's summit at 68.7dvh sits BELOW the near rock's at 63.5, which is
-    // the one place on the site where the summit ladder is deliberately out of
-    // order: the near ridge has to poke above the cloud sea or there is no pass,
-    // only weather. The generator allows it because that row still shows 5.6dvh
-    // of open ground, so the depth reads without the summit needing to clear.
-    layers: [
-      { grammar: 'ridge', seed: 17401, peaks: 4, amp: 0.72, depth: 3, roughness: 0.5 },
-      {
-        grammar: 'ridge',
-        seed: 18427,
-        lift: 1.35,
-        peaks: 5,
-        amp: 0.78,
-        depth: 2,
-        roughness: 0.45,
-      },
-      {
-        grammar: 'cloudbank',
+        // Paler than the rock behind it, or there is no cloud line, only weather.
+        kind: 'cloud',
         seed: 19433,
-        lift: 0.95,
-        lumps: 6,
-        amp: 0.66,
-        spread: 0.72,
+        from: 340,
+        to: 490,
+        crest: apparentCrest(30, 2, 0.95),
+        deck: 5.5,
         fill: 4,
       },
+    ],
+  },
+  {
+    depth: 4,
+    nominalCrest: apparentCrest(30, 3),
+    regions: [
       {
-        grammar: 'ridge',
+        kind: 'forest',
+        seed: 4831,
+        from: -24,
+        to: 178,
+        crest: apparentCrest(30, 3),
+        boughs: 2,
+        minH: 0.42,
+        density: [
+          [128, 1],
+          [156, 0.55],
+          [172, 0.15],
+          [178, 0],
+        ],
+      },
+      {
+        // Distant hills behind the clearing: the first sign of the mountains.
+        kind: 'range',
+        seed: 8087,
+        from: 138,
+        to: 216,
+        crest: 13,
+        aspect: [3, 4],
+        peaks: 2,
+        depth: 3,
+        roughness: 0.38,
+        smooth: true,
+        shoulder: 3,
+      },
+      {
+        // Summits at roughly 47 scene units, so the far range stands highest.
+        // That is how a range reads: taller mountains seen over a nearer ridge.
+        kind: 'range',
+        seed: 13297,
+        from: 196,
+        to: 354,
+        crest: apparentCrest(34, 3, 2.2),
+        aspect: [1.9, 2.8],
+        peaks: 2,
+        depth: 3,
+        roughness: 0.52,
+        shoulder: 7,
+      },
+      {
+        kind: 'range',
         seed: 20479,
-        lift: 2.15,
-        peaks: 7,
-        amp: 0.86,
+        from: 342,
+        to: 490,
+        crest: apparentCrest(30, 3, 2.15),
+        aspect: [2, 2.8],
+        peaks: 2,
         depth: 3,
         roughness: 0.5,
+        shoulder: 6,
         fill: 3,
       },
     ],
   },
+]
+
+/**
+ * The river and the lake.
+ *
+ * Painted after row 2 and before row 1: water lies in the ground plane in front
+ * of row 2, and behind it that row's solid ground would hide it completely.
+ *
+ * The river rises under the near trees at the woods' edge, winds east across the
+ * clearing, passes behind the hill and opens into the lake. Its far bank has to
+ * stay in front of row 2's ground line and its near bank tucks under the near
+ * row; the generator checks both.
+ *
+ * `width` is the perspective, as half-width per scene unit below the horizon.
+ */
+export const WATER = {
+  seed: 23011,
+  river: { from: 100, to: 254, y: 98.4, swing: 2.4, width: 0.05, wavelengths: [44, 19] },
+  lake: { from: 246, to: 324, y: 99.6, half: 4.9, waver: 0.9 },
 }

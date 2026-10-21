@@ -6,16 +6,16 @@ and the metadata routes read the same values.
 
 ## Files
 
-| File                               | Exports                                                                        | Used by                                             |
-| ---------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `src/content/site.ts`              | `SITE`, `HERO_SUBTEXT`, `ABOUT`, `CV_PDF`, `CV_INTRO`                          | Layout, home, CV, JSON-LD, `llms.txt`               |
-| `src/content/stations.ts`          | `STATIONS`, `EXTERNAL_LINKS`, `stationIndex()`, `stationFor()`                 | Nav, pan, sitemap, `llms.txt`, landscape            |
-| `src/content/experience.ts`        | `ROLES`, `MINOR_ROLES`, `EDUCATION`, `CREDENTIALS`                             | Experience, CV, JSON-LD, `llms.txt`                 |
-| `src/content/skills.ts`            | `SKILLS`, `SkillId`, `IconSkillId`, `SKILL_BY_ID`, `WALL_GROUPS`, `skillsIn()` | Experience, projects, registry, JSON-LD, `llms.txt` |
-| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`, `PROJECT_GROUPS`, `PROJECT_SHELVES`           | Projects, JSON-LD, `llms.txt`                       |
-| `src/content/articles.ts`          | `ARTICLES`, `ARTICLES_NOTE`                                                    | Writing, JSON-LD, `llms.txt`                        |
-| `src/content/types.ts`             | All content interfaces and types                                               | Every content module                                |
-| `src/content/terrain.generated.ts` | `TERRAIN`, `BiomeKey`, `HORIZON_DVH`, terrain interfaces                       | Landscape, static landscape                         |
+| File                               | Exports                                                                                                     | Used by                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `src/content/site.ts`              | `SITE`, `HERO_SUBTEXT`, `ABOUT`, `CV_PDF`, `CV_INTRO`                                                       | Layout, home, CV, JSON-LD, `llms.txt`               |
+| `src/content/stations.ts`          | `STATIONS`, `EXTERNAL_LINKS`, `stationIndex()`, `stationFor()`                                              | Nav, pan, sitemap, `llms.txt`, landscape            |
+| `src/content/experience.ts`        | `ROLES`, `MINOR_ROLES`, `EDUCATION`, `CREDENTIALS`                                                          | Experience, CV, JSON-LD, `llms.txt`                 |
+| `src/content/skills.ts`            | `SKILLS`, `SkillId`, `IconSkillId`, `SKILL_BY_ID`, `WALL_GROUPS`, `skillsIn()`                              | Experience, projects, registry, JSON-LD, `llms.txt` |
+| `src/content/projects.ts`          | `PROJECTS`, `FEATURED_PROJECTS`, `PROJECT_GROUPS`, `PROJECT_SHELVES`                                        | Projects, JSON-LD, `llms.txt`                       |
+| `src/content/articles.ts`          | `ARTICLES`, `ARTICLES_NOTE`                                                                                 | Writing, JSON-LD, `llms.txt`                        |
+| `src/content/types.ts`             | All content interfaces and types                                                                            | Every content module                                |
+| `src/content/terrain.generated.ts` | `PANORAMA`, `HORIZON_DVH`, types `Panorama`, `PanoramaRow`, `PanoramaFill`, `PanoramaUse`, `PanoramaSymbol` | Landscape, static landscape                         |
 
 `terrain.generated.ts` is generated. Never edit it by hand. See
 [`landscape.md`](landscape.md#generation-and-validation).
@@ -67,11 +67,14 @@ visitor; the CV intro addresses someone already holding a CV.
   href: string // route, no trailing slash in source
   label: string // full nav label
   short: string // marker label
-  biome: BiomeKey
 }
 ```
 
-The array order is west to east. Reordering it reorders the world. `EXTERNAL_LINKS`
+The array order is west to east. Reordering it reorders the world. Stations
+carry no terrain of their own: each one's window on the panorama is fixed by its
+index, and the panorama is generated for a strip as wide as the list. Adding or
+removing a station means extending the route in `scripts/lib/terrain-config.mjs`
+and running `pnpm terrain`; see [`playbooks.md`](playbooks.md#extending-the-route-for-a-station). `EXTERNAL_LINKS`
 is separate and currently contains only the external music site; it is not a
 station and never receives the trail marker.
 
@@ -79,7 +82,7 @@ station and never receives the trail marker.
 
 1. exact match;
 2. nested match under a station path;
-3. forest (`0`) for anything else, including `/cv` and 404s.
+3. Home's woods (`0`) for anything else, including `/cv` and 404s.
 
 This fallback is deliberate: an unknown path should land somewhere recognisable.
 

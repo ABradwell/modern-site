@@ -28,30 +28,38 @@ The package versions are pinned exactly in `package.json`; the lockfile is
 | ------------------ | ------------------------------------------------ |
 | `GUTTER_VW`        | `16`                                             |
 | `SPAN_VW`          | `116`                                            |
-| `SLOT_VW`          | `132`                                            |
 | `STRIP_VW`         | `STATIONS.length * 116`; `464` for four stations |
-| `SEAM_RAMP_PCT`    | `16 / 132 * 100` ≈ `12.12%`                      |
 | `panTarget(index)` | `-stripPct(index * 116)`                         |
 
-With four stations, each `panTarget` step is `25%` of the strip. See
+With four stations, each `panTarget` step is `25%` of the strip. At rest,
+station `i` shows the window `[116i, 116i + 100]` in strip viewport widths. See
 `src/lib/station-geometry.ts` and [`landscape.md`](landscape.md).
+`scripts/lib/terrain-config.mjs` mirrors `SPAN_VW` and `STRIP_VW`, and
+`Landscape.tsx` throws if the generated `PANORAMA.stripVw` disagrees.
 
 ## Scene constants
 
-| Constant               | Value                | Owner                 |
-| ---------------------- | -------------------- | --------------------- |
-| `--scene`              | `max(100svh, 48rem)` | `globals.css`         |
-| `--vu`                 | `var(--scene) / 100` | `globals.css`         |
-| `CAMERA.horizon`       | `58`                 | `terrain-config.mjs`  |
-| `CAMERA.nearBase`      | `106`                | `terrain-config.mjs`  |
-| `CAMERA.recession`     | `0.74`               | `terrain-config.mjs`  |
-| `BODY_DVH`             | `24`                 | `terrain-mask.ts`     |
-| `SOLID_TO`             | `0.4`                | `terrain-mask.ts`     |
-| `CONTENT_OFFSET_DVH`   | `20`                 | `motion.ts`           |
-| Absolute content start | `120` scene units    | hero + offset         |
-| Near terrain floor     | `106 + 24 = 130`     | `nearBase + BODY_DVH` |
-| `HAZE_DVH`             | `52`                 | `atmosphere.ts`       |
-| `HORIZON_DVH`          | `58`                 | generated export      |
+| Constant               | Value                | Owner                               |
+| ---------------------- | -------------------- | ----------------------------------- |
+| `--scene`              | `max(100svh, 48rem)` | `globals.css`                       |
+| `--vu`                 | `var(--scene) / 100` | `globals.css`                       |
+| `CAMERA.horizon`       | `58`                 | `terrain-config.mjs`                |
+| `CAMERA.nearBase`      | `106`                | `terrain-config.mjs`                |
+| `CAMERA.recession`     | `0.74`               | `terrain-config.mjs`                |
+| `BODY_VU`              | `24`                 | `terrain-config.mjs`                |
+| `SOLID_TO`             | `0.4`                | `terrain-config.mjs`                |
+| `GROUND`               | `0.12`               | `terrain-config.mjs`                |
+| `NEAR_TOP`             | `76`                 | `terrain-config.mjs`                |
+| `DESIGN_ASPECT`        | `1.75`               | `terrain-config.mjs`                |
+| `REFERENCE`            | `1440 x 900`         | `terrain-config.mjs`                |
+| `boxFit`               | `2.6`                | `generate-terrain.mjs`              |
+| `PANORAMA.bandVu`      | `130`                | generated export                    |
+| LOD cut-off (`lod-1`)  | aspect `7/5`         | `globals.css`, `terrain-render.mjs` |
+| `CONTENT_OFFSET_DVH`   | `20`                 | `motion.ts`                         |
+| Absolute content start | `120` scene units    | hero + offset                       |
+| Near terrain floor     | `106 + 24 = 130`     | `nearBase + BODY_VU`                |
+| `HAZE_DVH`             | `52`                 | `atmosphere.ts`                     |
+| `HORIZON_DVH`          | `58`                 | generated export                    |
 
 ## Motion constants
 
@@ -97,69 +105,82 @@ there, not on the page.
 | `CHIP`        | `font-mono text-xs`         |
 | `TAG`         | bordered mono tag; no pill  |
 
-## Biome reference
+## Route reference
 
-| Key          | Label                | Near crest | Layers                                 | Station     |
-| ------------ | -------------------- | ---------- | -------------------------------------- | ----------- |
-| `forest`     | Forest               | `30`       | 4 conifer rows                         | `/`         |
-| `plains`     | Plains               | `24`       | grass, grass, ridge, cloudbank + river | `/skills`   |
-| `foothills`  | Foothills            | `30`       | 4 smoothed ridge rows                  | none        |
-| `mountains`  | Mountains            | `34`       | 4 angular ridge rows                   | `/projects` |
-| `abovecloud` | Above the cloud line | `30`       | rock, rock, cloudbank, rock            | `/articles` |
+Regions per depth in `ROWS`, in strip viewport widths. Regions overlap, and each
+row changes at a different place. Station windows: Home `[0, 100]`, Experience
+`[116, 216]`, Projects `[232, 332]`, Writing `[348, 448]`.
 
-The first row is nearest. Ground lines and crests are derived by the generator,
-not authored per layer. `fill` can override the terrain ramp rung; above-cloud
-uses that for its pale cloud sea and distant rock.
+| Depth | Regions                                                                                                                                             |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1`   | forest `-24` to `134`, thinning from `90`; meadow `98` to `214`; massif (the hill) at `222`; lake shore meadow `210` to `344`; range `334` to `490` |
+| `2`   | forest `-24` to `164`; meadow `124` to `222`; low range `198` to `256`; ranges `240` to `346` and `338` to `490`                                    |
+| `3`   | forest `-24` to `216`; low range `186` to `244`; range `226` to `352`; cloud sea `340` to `490` (`fill: 4`)                                         |
+| `4`   | forest `-24` to `178`; distant hills `138` to `216`; ranges `196` to `354` and `342` to `490` (`fill: 3`)                                           |
+| water | river `100` to `254`; lake `246` to `324`; painted after row 2, before row 1                                                                        |
+
+Depth `1` is nearest. Ground lines and crests derive from `CAMERA`, not from
+each region. `fill` overrides the terrain ramp rung; the cloud sea uses it to
+read paler than the rock behind it.
 
 ## Key symbols
 
-| Symbol                                                             | Location                           | Meaning                              |
-| ------------------------------------------------------------------ | ---------------------------------- | ------------------------------------ |
-| `STATIONS`                                                         | `src/content/stations.ts`          | Ordered route geography              |
-| `stationIndex` / `stationFor`                                      | same                               | Pathname to station, forest fallback |
-| `EXTERNAL_LINKS`                                                   | same                               | Off-trail nav links, not stations    |
-| `PAN_SPRING` / `SPEED`                                             | `src/lib/motion.ts`                | Horizontal and vertical motion       |
-| `CONTENT_OFFSET_DVH`                                               | same                               | Content start below a full hero      |
-| `GUTTER_VW` / `SPAN_VW` / `SLOT_VW`                                | `src/lib/station-geometry.ts`      | Strip layout                         |
-| `Z` / `SCENE_Z`                                                    | `src/lib/z.ts`                     | Stacking scales                      |
-| `PROSE` / `META` / `CHIP` / `TAG`                                  | `src/lib/type.ts`                  | Body and meta type                   |
-| `siteGraph`                                                        | `src/lib/schema.ts`                | Person + WebSite                     |
-| `homeGraph` / `experienceGraph` / `projectsGraph` / `writingGraph` | same                               | Page graphs                          |
-| `CSP_META` / `CSP_HEADER`                                          | `src/lib/csp.ts`                   | Meta and header policies             |
-| `TERRAIN`                                                          | `src/content/terrain.generated.ts` | Generated biome data                 |
-| `BRAND_MARKS`                                                      | `src/components/brand/registry.ts` | Skill id to Simple Icons mark        |
-| `verify-export.mjs`                                                | `scripts/`                         | Post-build gate                      |
-| `terrain-config.mjs`                                               | `scripts/lib/`                     | Camera, bands, biome declarations    |
-| `terrain-grammars.mjs`                                             | `scripts/lib/`                     | Shape generation                     |
+| Symbol                                                             | Location                                | Meaning                                                                                                      |
+| ------------------------------------------------------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `STATIONS`                                                         | `src/content/stations.ts`               | Ordered route geography                                                                                      |
+| `stationIndex` / `stationFor`                                      | same                                    | Pathname to station, Home fallback                                                                           |
+| `EXTERNAL_LINKS`                                                   | same                                    | Off-trail nav links, not stations                                                                            |
+| `PAN_SPRING` / `SPEED`                                             | `src/lib/motion.ts`                     | Horizontal and vertical motion                                                                               |
+| `CONTENT_OFFSET_DVH`                                               | same                                    | Content start below a full hero                                                                              |
+| `GUTTER_VW` / `SPAN_VW` / `STRIP_VW` / `panTarget`                 | `src/lib/station-geometry.ts`           | Strip layout                                                                                                 |
+| `Z` / `SCENE_Z`                                                    | `src/lib/z.ts`                          | Stacking scales                                                                                              |
+| `PROSE` / `META` / `CHIP` / `TAG`                                  | `src/lib/type.ts`                       | Body and meta type                                                                                           |
+| `siteGraph`                                                        | `src/lib/schema.ts`                     | Person + WebSite                                                                                             |
+| `homeGraph` / `experienceGraph` / `projectsGraph` / `writingGraph` | same                                    | Page graphs                                                                                                  |
+| `CSP_META` / `CSP_HEADER`                                          | `src/lib/csp.ts`                        | Meta and header policies                                                                                     |
+| `PANORAMA` / `HORIZON_DVH`                                         | `src/content/terrain.generated.ts`      | Generated panorama                                                                                           |
+| `PanoramaRowSvg` / `PanoramaWaterSvg` / `panoramaRow`              | `src/components/landscape/panorama.tsx` | Inline-SVG row and water render                                                                              |
+| `renderWindow` / `maxLod`                                          | `scripts/lib/terrain-render.mjs`        | Flattened window for preview and OG card                                                                     |
+| `BRAND_MARKS`                                                      | `src/components/brand/registry.ts`      | Skill id to Simple Icons mark                                                                                |
+| `verify-export.mjs`                                                | `scripts/`                              | Post-build gate                                                                                              |
+| `terrain-config.mjs`                                               | `scripts/lib/`                          | Camera, strip, body, `ROWS`, `WATER`                                                                         |
+| `terrain-grammars.mjs`                                             | `scripts/lib/`                          | Shape generation: `conifer`, `snag`, `poplar`, `massif`, `waves`, `envelope`, `profile`, `cloudSea`, `water` |
 
 ## Glossary
 
-**Station** — a route in the landscape. Stations have a nav label, biome, pan
-target and sitemap entry. `/cv` is not a station.
+**Station**: a route in the landscape. Stations have a nav label, a window on
+the panorama, a pan target and a sitemap entry. `/cv` is not a station.
 
-**Biome** — a generated set of four terrain layers (and optionally water) for a
-station. `foothills` is generated but unreferenced.
+**Panorama**: the one generated landscape for the whole trail, `STRIP_VW` wide,
+in four rows plus water. Exported as `PANORAMA`.
 
-**Depth** — a terrain row, `1` (nearest) to `4` (furthest). Depth controls the
+**Region**: a stretch of one row in `ROWS`: forest, meadow, massif, range or
+cloud. Regions overlap, so an edge is a change of density rather than a seam.
+
+**Symbol**: a shape with its own proportion (conifer, snag, poplar, hill,
+mountain), placed by `<use>` at a centre in viewport widths and a height in scene
+units. It stands only on its row's base.
+
+**Level of detail**: every other placed shape has class `lod-1` and is hidden
+below aspect ratio 7:5.
+
+**Depth**: a terrain row, `1` (nearest) to `4` (furthest). Depth controls the
 vertical speed and the paint band; it is not an array index.
 
-**Gutter** — the 16vw transition between station slots, where the eastern biome
-fades in over the western one.
+**Gutter**: the 16vw of world after each station that is only seen in passing.
+It gives a change of scene room to happen off-screen.
 
-**Slot** — the painted width of a station: 100vw content plus a 16vw bleed on
-each side.
+**Span**: the distance travelled per station: 100vw plus its gutter.
 
-**Span** — the distance travelled per station: 100vw plus its gutter.
+**Scene unit (`--vu`)**: one percent of `--scene`, which is `max(100svh, 48rem)`.
 
-**Scene unit (`--vu`)** — one percent of `--scene`, which is `max(100svh, 48rem)`.
-
-**Near band** — depth 1, painted in front of content, clipped to the top overlap
+**Near band**: depth 1, painted in front of content, clipped to the top overlap
 and `pointer-events-none`.
 
-**Off-trail** — a page not in `STATIONS`; it resolves to the forest and has no
+**Off-trail**: a page not in `STATIONS`; it resolves to Home and has no
 marker or sitemap entry.
 
-**Store** — not a thing here. No database, CMS or server state.
+**Store**: not a thing here. No database, CMS or server state.
 
 ## Deliberate omissions and asymmetries
 
@@ -179,23 +200,27 @@ marker or sitemap entry.
 
 ## Decision log
 
-| Decision                     | Why                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| Static export                | Small personal site with no runtime work; cheap, cacheable, portable          |
-| Typed content modules        | Compile-time checking without a CMS; one source for pages and metadata        |
-| Landscape in root layout     | App Router preserves layout state, so panning is continuous travel            |
-| One horizontal spring        | Per-depth horizontal parallax read as the world coming apart                  |
-| Depth on the vertical axis   | Reader controls the rate; stable and comfortable                              |
-| Scene units with a floor     | Keeps the composition and type aligned on landscape phones                    |
-| 16vw gutters                 | Hides the seam while travelling without showing the next biome at rest        |
-| Generated, committed terrain | Deterministic, reviewable, zero runtime generation, no hydration risk         |
-| One-page Experience          | Roles and competencies belong together; retired `/experience`                 |
-| Off-trail CV                 | A CV is scanned, not navigated; no trail marker or sitemap entry              |
-| `trailingSlash: true`        | DigitalOcean serves a plain file tree; directory indexes are required         |
-| Meta CSP plus headers        | Static hosts cannot all set headers; meta travels with the page               |
-| `data-theme` attribute       | The token layer and theme control need a writable theme state                 |
-| One-pill skill wall          | Two visual registers read as two kinds of object; one pill plus optional mark |
-| No ambient motion            | The landscape is the deliberate gesture; reveals establish reading order      |
+| Decision                               | Why                                                                                                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static export                          | Small personal site with no runtime work; cheap, cacheable, portable                                                                            |
+| Typed content modules                  | Compile-time checking without a CMS; one source for pages and metadata                                                                          |
+| Landscape in root layout               | App Router preserves layout state, so panning is continuous travel                                                                              |
+| One horizontal spring                  | Per-depth horizontal parallax read as the world coming apart                                                                                    |
+| Depth on the vertical axis             | Reader controls the rate; stable and comfortable                                                                                                |
+| Scene units with a floor               | Keeps the composition and type aligned on landscape phones                                                                                      |
+| 16vw gutters                           | A change of scene happens off-screen, so each station shows one place at rest                                                                   |
+| One continuous panorama                | Per-station repeating tiles read as wallpaper and could not carry a feature, such as the river, from one station into the next                  |
+| Positioned in vw, sized in scene units | Stations are spaced in viewport widths, but a shape drawn in them squeezes on a phone and splays on an ultrawide; symbols keep their proportion |
+| `boxFit` plus one LOD cut-off          | On narrow screens shapes scale down uniformly instead of crowding; below 7:5 every other shape drops, holding density within a factor of two    |
+| Static fallback as a client module     | As a Server Component the fallback panorama was serialised into every RSC payload, about 300KB per navigation                                   |
+| Generated, committed terrain           | Deterministic, reviewable, zero runtime generation, no hydration risk                                                                           |
+| One-page Experience                    | Roles and competencies belong together; retired `/experience`                                                                                   |
+| Off-trail CV                           | A CV is scanned, not navigated; no trail marker or sitemap entry                                                                                |
+| `trailingSlash: true`                  | DigitalOcean serves a plain file tree; directory indexes are required                                                                           |
+| Meta CSP plus headers                  | Static hosts cannot all set headers; meta travels with the page                                                                                 |
+| `data-theme` attribute                 | The token layer and theme control need a writable theme state                                                                                   |
+| One-pill skill wall                    | Two visual registers read as two kinds of object; one pill plus optional mark                                                                   |
+| No ambient motion                      | The landscape is the deliberate gesture; reveals establish reading order                                                                        |
 
 ## Where to look first
 

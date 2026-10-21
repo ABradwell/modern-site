@@ -2,19 +2,19 @@
 
 The site has four **stations** in the landscape plus one off-trail CV page and a
 generated 404. A station is a route that participates in the travel model: it
-appears in the nav, owns a biome, receives a pan target and is listed in the
+appears in the nav, owns a window on the panorama, receives a pan target and is listed in the
 sitemap. `/cv` deliberately does none of those things.
 
 ## Route inventory
 
-| Route       | Source                      | Nav label  | Biome            | Canonical    | Main sections                                                |
-| ----------- | --------------------------- | ---------- | ---------------- | ------------ | ------------------------------------------------------------ |
-| `/`         | `src/app/page.tsx`          | Home       | forest           | `/`          | Hero, About, Get in touch, Core competencies                 |
-| `/skills`   | `src/app/skills/page.tsx`   | Experience | plains           | `/skills/`   | Hero, Core competencies, Roles, Also worked with, Education  |
-| `/projects` | `src/app/projects/page.tsx` | Projects   | mountains        | `/projects/` | Hero, Built                                                  |
-| `/articles` | `src/app/articles/page.tsx` | Writing    | above cloud line | `/articles/` | Hero, Published, What is coming                              |
-| `/cv`       | `src/app/cv/page.tsx`       | none       | forest fallback  | `/cv/`       | Hero, Introduction, Experience, Core competencies, Education |
-| 404         | `src/app/not-found.tsx`     | none       | forest fallback  | none         | Static landscape, trail links                                |
+| Route       | Source                      | Nav label  | Place on the trail  | Canonical    | Main sections                                                |
+| ----------- | --------------------------- | ---------- | ------------------- | ------------ | ------------------------------------------------------------ |
+| `/`         | `src/app/page.tsx`          | Home       | deep woods          | `/`          | Hero, About, Get in touch, Core competencies                 |
+| `/skills`   | `src/app/skills/page.tsx`   | Experience | woods' edge, meadow | `/skills/`   | Hero, Core competencies, Roles, Also worked with, Education  |
+| `/projects` | `src/app/projects/page.tsx` | Projects   | lake, mountains     | `/projects/` | Hero, Built                                                  |
+| `/articles` | `src/app/articles/page.tsx` | Writing    | above cloud line    | `/articles/` | Hero, Published, What is coming                              |
+| `/cv`       | `src/app/cv/page.tsx`       | none       | deep woods fallback | `/cv/`       | Hero, Introduction, Experience, Core competencies, Education |
+| 404         | `src/app/not-found.tsx`     | none       | deep woods fallback | none         | Static landscape, trail links                                |
 
 The station order in `src/content/stations.ts` is the order of travel:
 
@@ -28,7 +28,7 @@ it. Keep that distinction: links, metadata, JSON-LD and `llms.txt` use
 
 ## Page details
 
-### `/` — Home (forest)
+### `/`: Home (deep woods)
 
 The landing page is three layout families below the hero, intentionally not
 repeated:
@@ -47,7 +47,7 @@ opening a mail client.
 Metadata: canonical `/`, `openGraph.url` is `SITE.url`. JSON-LD is
 `homeGraph` (`ProfilePage` with `mainEntity` pointing at the site-wide Person).
 
-### `/skills` — Experience (plains)
+### `/skills`: Experience (the woods' edge)
 
 One page carries roles, competencies and education. It replaced the former
 `/experience` and `/skills` split.
@@ -69,7 +69,7 @@ Metadata: title `Experience`, canonical `/skills/`. JSON-LD is
 
 The hero links to `CV_PDF` in `public/`. The PDF is also linked from `/cv`.
 
-### `/projects` — Projects (mountains)
+### `/projects`: Projects (the lake)
 
 A single section, **Built**, rendered by `ProjectShowcase` from
 `PROJECT_SHELVES`. A tab per project group (Modern work, University work); each
@@ -85,7 +85,7 @@ stack names and links. Index rows show year, name, `summary` and links.
 Metadata: title `Projects`, canonical `/projects/`. JSON-LD is `projectsGraph`
 (`CollectionPage`, breadcrumb, `ItemList` of `SoftwareSourceCode`).
 
-### `/articles` — Writing (above cloud line)
+### `/articles`: Writing (above cloud line)
 
 Two externally published opinion pieces in a numbered, hairline-divided list,
 not cards. The page also carries a short "What is coming" note from
@@ -97,7 +97,7 @@ and JSON-LD declares the LinkedIn URLs rather than inventing local pages.
 Metadata: title `Writing`, canonical `/articles/`. JSON-LD is `writingGraph`
 (`CollectionPage`, breadcrumb, `ItemList` of `Article`).
 
-### `/cv` — off-trail CV
+### `/cv`: off-trail CV
 
 `/cv` renders the same tenure in a different register:
 
@@ -107,7 +107,7 @@ Metadata: title `Writing`, canonical `/articles/`. JSON-LD is `writingGraph`
 - links to the PDF and back to `/skills`.
 
 It is not in `STATIONS`, so it does not appear in the header nav, trail marker,
-sitemap or swipe order. `stationIndex('/cv')` falls through to the forest, which
+sitemap or swipe order. `stationIndex('/cv')` falls through to Home's woods, which
 also means the header has no current station. That is intentional.
 
 The page has its own canonical `/cv/` and `openGraph.url`, but no page-level
@@ -171,17 +171,20 @@ form, and the build gate exists to catch that.
 A station affects more than a page. Use the full checklist in
 [`playbooks.md`](playbooks.md#add-a-station), and account for:
 
-1. `src/content/stations.ts` — order, label, short label, biome.
-2. `scripts/lib/stations.mjs` — the plain-Node route list.
-3. `src/app/<route>/page.tsx` — page, metadata and canonical.
-4. `src/lib/schema.ts` — a page graph and breadcrumb if the route is indexed.
-5. `src/app/llms.txt/route.ts` — the station list is automatic, but any new
+1. `src/content/stations.ts`: order, label, short label.
+2. `scripts/lib/stations.mjs`: the plain-Node route list.
+3. `src/app/<route>/page.tsx`: page, metadata and canonical.
+4. `src/lib/schema.ts`: a page graph and breadcrumb if the route is indexed.
+5. `src/app/llms.txt/route.ts`: the station list is automatic, but any new
    content section may need a new block.
-6. `src/app/sitemap.ts` — automatic from `STATIONS`.
-7. `scripts/verify-export.mjs` — automatic for stations; add an entry for an
+6. `src/app/sitemap.ts`: automatic from `STATIONS`.
+7. `scripts/verify-export.mjs`: automatic for stations; add an entry for an
    off-trail page.
-8. `README.md` and these docs — update the route table.
-9. `scripts/lib/terrain-config.mjs` — only if the station introduces a new biome.
+8. `README.md` and these docs: update the route table.
+9. `scripts/lib/terrain-config.mjs`: always. The panorama is generated for a
+   strip of exactly `STRIP_VW`, so extend the regions in `ROWS` (and `WATER` if
+   it crosses the new window) to cover the new station, then run `pnpm terrain`.
+   `Landscape.tsx` throws if the generated `PANORAMA.stripVw` disagrees.
 
 Adding a station increases the strip width and therefore the felt travel
 distance. `PAN_SPRING` was tuned after the gutter change; re-evaluate it if the
@@ -198,5 +201,5 @@ Use `/cv` as the pattern:
   station-only);
 - add it to `scripts/verify-export.mjs` if its absence would be silent;
 - link it from an existing page and/or `llms.txt`;
-- if it needs a station's biome, pass the desired pathname to `LandscapeStatic`
-  or rely on the documented forest fallback.
+- if it needs a station's window on the panorama, pass the desired pathname to
+  `LandscapeStatic` or rely on the documented Home fallback.
