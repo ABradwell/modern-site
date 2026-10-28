@@ -130,6 +130,7 @@ export const SKILLS = [
     tier: 1,
   },
   { id: 'vite', name: 'Vite', icon: 'SiVite', category: 'frameworks', tier: 1 },
+  { id: 'threejs', name: 'Three.js', icon: null, category: 'frameworks', tier: 2 },
   { id: 'fastapi', name: 'FastAPI', icon: 'SiFastapi', category: 'frameworks', tier: 1 },
   { id: 'flink', name: 'Flink', icon: 'SiApacheflink', category: 'frameworks', tier: 1 },
   { id: 'kafka', name: 'Kafka', icon: 'SiApachekafka', category: 'frameworks', tier: 1 },

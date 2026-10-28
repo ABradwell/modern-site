@@ -187,6 +187,15 @@ export interface ProjectGroup {
   readonly period: string
 }
 
+export interface ProjectImage {
+  readonly src: string
+  readonly alt: string
+  readonly width: number
+  readonly height: number
+  /** A few words under a gallery image. Unused for the lead image. */
+  readonly caption?: string
+}
+
 export interface Project {
   readonly slug: string
   readonly name: string
@@ -199,12 +208,12 @@ export interface Project {
   readonly stack: readonly string[]
   readonly repo?: string
   readonly live?: string
-  readonly image?: {
-    readonly src: string
-    readonly alt: string
-    readonly width: number
-    readonly height: number
-  }
+  readonly image?: ProjectImage
+  /**
+   * Further screenshots, shown only where a project is given room for more than
+   * one, which today is the home page's featured project.
+   */
+  readonly gallery?: readonly ProjectImage[]
   /** Preserved attribution where a project leans on someone else's work. */
   readonly credit?: string
   readonly featured: boolean

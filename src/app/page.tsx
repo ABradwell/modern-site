@@ -5,11 +5,13 @@ import { ArrowUpRight } from '@phosphor-icons/react/dist/ssr'
 
 import { ContactRoutes } from '@/components/sections/ContactRoutes'
 import { CoreCompetencies } from '@/components/sections/CoreCompetencies'
+import { FeaturedProject } from '@/components/sections/FeaturedProject'
 import { Section, StationContent } from '@/components/layout/StationContent'
 import { ScrollCue } from '@/components/layout/ScrollCue'
 import { StationHero } from '@/components/layout/StationHero'
 import { Reveal } from '@/components/system/reveal'
 import { JsonLd } from '@/components/system/json-ld'
+import { HOME_FEATURE } from '@/content/projects'
 import { ABOUT, HERO_SUBTEXT, SITE } from '@/content/site'
 import { homeGraph } from '@/lib/schema'
 import { PROSE } from '@/lib/type'
@@ -25,15 +27,15 @@ export const metadata: Metadata = {
 }
 
 /**
- * The landing page. Three layout families below the hero, none repeated: a
- * single-column read against a portrait, a two-column close, and the
- * label-rail competency wall.
+ * The landing page. Four layout families below the hero, none repeated: a
+ * single-column read against a portrait, a two-column close, a media-led
+ * project split, and the label-rail competency wall.
  *
- * Section order is About, then Get in touch, then Core competencies. Contact
- * sitting above the competencies rather than closing the page is deliberate on
- * the owner's part: the page's job is to get someone to make contact, and the
- * competencies are supporting evidence a reader can go on to explore in full
- * on the Experience page.
+ * Section order is About, then Get in touch, then Featured project, then Core
+ * competencies. Contact sitting above the rest rather than closing the page is
+ * deliberate on the owner's part: the page's job is to get someone to make
+ * contact, and the featured project and the competencies are supporting
+ * evidence a reader can go on to explore in full on their own pages.
  */
 export default function HomePage() {
   return (
@@ -85,6 +87,25 @@ export default function HomePage() {
             {SITE.contactLabel}
           </a>
         </div>
+
+        {/* The way into the town, for a reader who would rather play than read.
+            Quieter than the pair above on purpose: it is an aside, not a third
+            call to action. dark:bg-background for the same reason as the
+            contact button, the moon passes behind it. */}
+        {HOME_FEATURE.live ? (
+          <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+            Looking for some whimsy?
+            <a
+              href={HOME_FEATURE.live}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-ctl border border-border-strong px-3 py-1.5 font-medium text-foreground transition-transform duration-200 active:scale-[0.98] motion-reduce:transition-none dark:bg-background"
+            >
+              Playable CV here
+              <ArrowUpRight className="size-3.5" weight="regular" aria-hidden />
+            </a>
+          </p>
+        ) : null}
 
         <ScrollCue href="#about" />
       </StationHero>
@@ -139,6 +160,10 @@ export default function HomePage() {
             </p>
             <ContactRoutes />
           </div>
+        </Section>
+
+        <Section id="featured-project" title="Featured project">
+          <FeaturedProject />
         </Section>
 
         <Section id="competencies" title="Core competencies">

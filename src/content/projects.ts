@@ -1,12 +1,54 @@
 import type { Project, ProjectGroup } from './types'
 
 /**
- * Seven, curated. The older work is undergraduate coursework and is presented as
+ * Eight, curated. The older work is undergraduate coursework and is presented as
  * such: real dates, real repositories, and no inflation. Where a project leans
  * on someone else's model or library, `credit` says so on the card rather than
  * in a footnote nobody reads.
  */
 export const PROJECTS: readonly Project[] = [
+  {
+    slug: 'bradwell-applications',
+    name: 'Bradwell Applications',
+    year: 2026,
+    group: 'modern-work',
+    summary:
+      'A voxel town in three.js that doubles as a playable CV: every house on the high street is one of my projects.',
+    detail:
+      'Each stone house carries a painted shop sign and, inside, a screenshot gallery, the project’s stack and a live preview. The Shack is where to find out who runs the place. Sixteen named townsfolk keep their own schedules, get hungry and tired, and head for the fruit stall or the nearest bench. The lamps come on at dusk, and pressing Space twice moves you in so you can walk the streets yourself.',
+    stack: ['typescript', 'threejs', 'vite'],
+    live: 'https://bradwell-applications.vercel.app',
+    image: {
+      src: '/images/projects/bradwell-applications.jpg',
+      alt: 'The voxel town in morning light: stone houses along a cobbled high street, market stalls and a bandstand, with the church, terraced hills and a river behind',
+      width: 1200,
+      height: 750,
+    },
+    gallery: [
+      {
+        src: '/images/projects/bradwell-applications-pub.jpg',
+        alt: 'A close view of the pub, a whitewashed stone house with a painted sign, a street lamp and a fenced beer garden, with townsfolk at the door',
+        width: 1200,
+        height: 750,
+        caption: 'Every house is a project',
+      },
+      {
+        src: '/images/projects/bradwell-applications-panel.jpg',
+        alt: 'The Assay Office panel open over the town, showing a screenshot of the LLM SEO Toolbox with links to visit it',
+        width: 1200,
+        height: 750,
+        caption: 'Step inside for the project itself',
+      },
+      {
+        src: '/images/projects/bradwell-applications-dusk.jpg',
+        alt: 'The high street at dusk, lit by street lamps and windows, with the bandstand glowing in the foreground',
+        width: 1200,
+        height: 750,
+        caption: 'The lamps come on at dusk',
+      },
+    ],
+    featured: true,
+  },
   {
     slug: 'llm-seo-toolbox',
     name: 'LLM SEO Toolbox',
@@ -155,6 +197,7 @@ export const PROJECT_GROUPS: readonly ProjectGroup[] = [
  * Independent of `featured`, which still means the home page.
  */
 const STAGE: readonly string[] = [
+  'bradwell-applications',
   'bradwell-music',
   'staniland-audio',
   'llm-seo-toolbox',
@@ -168,6 +211,9 @@ function bySlug(slug: string): Project {
   if (!project) throw new Error(`STAGE references unknown project "${slug}"`)
   return project
 }
+
+/** The one project the home page gives a section of its own. */
+export const HOME_FEATURE: Project = bySlug('bradwell-applications')
 
 export interface ProjectShelf {
   readonly group: ProjectGroup
