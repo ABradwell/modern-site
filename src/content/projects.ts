@@ -17,7 +17,7 @@ export const PROJECTS: readonly Project[] = [
     detail:
       'Each stone house carries a painted shop sign and, inside, a screenshot gallery, the project’s stack and a live preview. The Shack is where to find out who runs the place. Sixteen named townsfolk keep their own schedules, get hungry and tired, and head for the fruit stall or the nearest bench. The lamps come on at dusk, and pressing Space twice moves you in so you can walk the streets yourself.',
     stack: ['typescript', 'threejs', 'vite'],
-    live: 'https://bradwell-applications.vercel.app',
+    live: 'https://town.aidenbradwell.com',
     image: {
       src: '/images/projects/bradwell-applications.jpg',
       alt: 'The voxel town in morning light: stone houses along a cobbled high street, market stalls and a bandstand, with the church, terraced hills and a river behind',
@@ -59,7 +59,7 @@ export const PROJECTS: readonly Project[] = [
     detail:
       'Paste a URL and it classifies the site, then runs twenty checks against the initial HTML response: llms.txt, RFC 9309 robots rules for crawlers like GPTBot and ClaudeBot, static signal-to-noise and the schema.org types that kind of site should carry. Each miss comes back with a score, a letter grade and the exact line that would fix it. No accounts, no cookies, and the audit is also available as a JSON API.',
     stack: ['typescript', 'react'],
-    live: 'https://llm-seo-toolbox.vercel.app',
+    live: 'https://llm.aidenbradwell.com',
     repo: 'https://github.com/ABradwell/llm-seo-toolbox',
     image: {
       src: '/images/projects/llm-seo-toolbox.jpg',
