@@ -177,8 +177,12 @@ eligibility text rendered beside it and in `llms.txt`.
 - `summary` is the index line and stage lede; `detail` is the stage paragraph.
 - `FEATURED_PROJECTS` is the `featured: true` subset. No page currently mounts
   it, and it is independent of `STAGE`.
+- `HOME_FEATURE` is the one project the home page's Featured project section
+  shows, chosen by slug. Changing the featured project is a one-line edit there.
 - `image` must include `width` and `height` because images are unoptimized under
   static export. Use `public/images/projects/…`.
+- `gallery` is optional further screenshots with short captions. Only the home
+  page's `FeaturedProject` renders it; the projects stage shows `image` alone.
 - `credit` is preserved attribution where a project leans on someone else's
   model, tutorial or library. It stays on the stage, not in a footnote.
 - `repo` and `live` are optional external links. If both are absent, the

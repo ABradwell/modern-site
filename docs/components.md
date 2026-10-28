@@ -138,6 +138,19 @@ Rows rather than an equal-card grid, so each category stays as long or short as
 it actually is. Wall order and labels stay in `src/content/skills.ts`; this
 component only presents them.
 
+### `FeaturedProject`
+
+The home page's Featured project section, from `HOME_FEATURE`:
+
+- lead screenshot in the wider column, with `gallery` as a row of three
+  captioned thumbnails beneath it;
+- name, summary, detail, stack tags and a live link alongside;
+- an "All projects" link to the project's anchor on `/projects`.
+
+Server-rendered and static: no lightbox or carousel, so nothing competes with
+`station-swipe.tsx` for horizontal drags. The hero's "Playable CV here" link
+reads the same project's `live` URL.
+
 ### `FeaturedWork`
 
 The former home-page asymmetric split:
