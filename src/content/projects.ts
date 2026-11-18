@@ -34,7 +34,7 @@ export const PROJECTS: readonly Project[] = [
       },
       {
         src: '/images/projects/bradwell-applications-panel.jpg',
-        alt: 'The Assay Office panel open over the town, showing a screenshot of the LLM SEO Toolbox with links to visit it',
+        alt: 'The Assay Office panel open over the town, showing a screenshot of LLMReady with links to visit it',
         width: 1200,
         height: 750,
         caption: 'Step inside for the project itself',
@@ -51,19 +51,18 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     slug: 'llm-seo-toolbox',
-    name: 'LLM SEO Toolbox',
+    name: 'LLMReady',
     year: 2026,
     group: 'modern-work',
     summary:
-      'An open-source auditor that rates how readable a URL is for large language models.',
+      'A subscription service that audits and tracks how AI crawlers read your sites.',
     detail:
-      'Paste a URL and it classifies the site, then runs twenty checks against the initial HTML response: llms.txt, RFC 9309 robots rules for crawlers like GPTBot and ClaudeBot, static signal-to-noise and the schema.org types that kind of site should carry. Each miss comes back with a score, a letter grade and the exact line that would fix it. No accounts, no cookies, and the audit is also available as a JSON API.',
-    stack: ['typescript', 'react'],
+      'It started as a free auditor and is now a SaaS. Paste a URL and it classifies the site, then checks what crawlers like GPTBot and ClaudeBot actually get: llms.txt, RFC 9309 robots rules, the static HTML and the schema.org types that kind of site should carry. Every scan is free for the overall score. Paid plans add tracked sites with score history, full reports with plain-language fixes and generated files, sector benchmarks, PDF reports, teams and an API, billed monthly or yearly through Stripe.',
+    stack: ['typescript', 'react', 'postgresql', 'openapi'],
     live: 'https://llm.aidenbradwell.com',
-    repo: 'https://github.com/ABradwell/llm-seo-toolbox',
     image: {
       src: '/images/projects/llm-seo-toolbox.jpg',
-      alt: 'The LLM SEO Toolbox homepage, with a URL field beside a sample audit of nextjs.org/docs',
+      alt: 'The LLMReady homepage, with a URL field beside a sample audit of nextjs.org/docs',
       width: 1200,
       height: 750,
     },
