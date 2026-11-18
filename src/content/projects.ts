@@ -1,7 +1,7 @@
 import type { Project, ProjectGroup } from './types'
 
 /**
- * Eight, curated. The older work is undergraduate coursework and is presented as
+ * Nine, curated. The older work is undergraduate coursework and is presented as
  * such: real dates, real repositories, and no inflation. Where a project leans
  * on someone else's model or library, `credit` says so on the card rather than
  * in a footnote nobody reads.
@@ -34,7 +34,7 @@ export const PROJECTS: readonly Project[] = [
       },
       {
         src: '/images/projects/bradwell-applications-panel.jpg',
-        alt: 'The Assay Office panel open over the town, showing a screenshot of the LLM SEO Toolbox with links to visit it',
+        alt: 'The Assay Office panel open over the town, showing a screenshot of LLMReady with links to visit it',
         width: 1200,
         height: 750,
         caption: 'Step inside for the project itself',
@@ -51,19 +51,36 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     slug: 'llm-seo-toolbox',
-    name: 'LLM SEO Toolbox',
+    name: 'LLMReady',
     year: 2026,
     group: 'modern-work',
     summary:
-      'An open-source auditor that rates how readable a URL is for large language models.',
+      'A subscription service that audits and tracks how AI crawlers read your sites.',
     detail:
-      'Paste a URL and it classifies the site, then runs twenty checks against the initial HTML response: llms.txt, RFC 9309 robots rules for crawlers like GPTBot and ClaudeBot, static signal-to-noise and the schema.org types that kind of site should carry. Each miss comes back with a score, a letter grade and the exact line that would fix it. No accounts, no cookies, and the audit is also available as a JSON API.',
-    stack: ['typescript', 'react'],
+      'It started as a free auditor and is now a SaaS. Paste a URL and it classifies the site, then checks what crawlers like GPTBot and ClaudeBot actually get: llms.txt, RFC 9309 robots rules, the static HTML and the schema.org types that kind of site should carry. Every scan is free for the overall score. Paid plans add tracked sites with score history, full reports with plain-language fixes and generated files, sector benchmarks, PDF reports, teams and an API, billed monthly or yearly through Stripe.',
+    stack: ['typescript', 'react', 'postgresql', 'openapi'],
     live: 'https://llm.aidenbradwell.com',
-    repo: 'https://github.com/ABradwell/llm-seo-toolbox',
     image: {
       src: '/images/projects/llm-seo-toolbox.jpg',
-      alt: 'The LLM SEO Toolbox homepage, with a URL field beside a sample audit of nextjs.org/docs',
+      alt: 'The LLMReady homepage, with a URL field beside a sample audit of nextjs.org/docs',
+      width: 1200,
+      height: 750,
+    },
+    featured: true,
+  },
+  {
+    slug: 'bradle-bots',
+    name: 'Bradle Bots',
+    year: 2026,
+    group: 'modern-work',
+    summary:
+      'A three.js garden of my coding agents, their tickets and their pull requests.',
+    detail:
+      'A small Node daemon reads Claude Code sessions, Jira or Asana, and GitHub, and a three.js page draws each epic as a plot, each ticket as a crop and each agent as a gardener. One glance shows who is working, who is waiting on me and which pull requests need a hand. From the page I can answer a permission prompt, message an idle agent, review its screenshots before it opens a pull request, or plant a new agent in a repo for a ticket. Everything runs locally.',
+    stack: ['javascript', 'nodejs', 'threejs', 'vite'],
+    image: {
+      src: '/images/projects/bradle-bots.jpg',
+      alt: 'The agent garden by day: three plots of crops, gardeners at work and a side panel listing every agent, with made-up tickets',
       width: 1200,
       height: 750,
     },
@@ -201,6 +218,7 @@ const STAGE: readonly string[] = [
   'bradwell-music',
   'staniland-audio',
   'llm-seo-toolbox',
+  'bradle-bots',
   'number-recognition',
   'hand-tracker',
 ]
