@@ -1,7 +1,7 @@
 import type { Project, ProjectGroup } from './types'
 
 /**
- * Eight, curated. The older work is undergraduate coursework and is presented as
+ * Nine, curated. The older work is undergraduate coursework and is presented as
  * such: real dates, real repositories, and no inflation. Where a project leans
  * on someone else's model or library, `credit` says so on the card rather than
  * in a footnote nobody reads.
@@ -63,6 +63,24 @@ export const PROJECTS: readonly Project[] = [
     image: {
       src: '/images/projects/llm-seo-toolbox.jpg',
       alt: 'The LLMReady homepage, with a URL field beside a sample audit of nextjs.org/docs',
+      width: 1200,
+      height: 750,
+    },
+    featured: true,
+  },
+  {
+    slug: 'bradle-bots',
+    name: 'Bradle Bots',
+    year: 2026,
+    group: 'modern-work',
+    summary:
+      'A three.js garden of my coding agents, their tickets and their pull requests.',
+    detail:
+      'A small Node daemon reads Claude Code sessions, Jira or Asana, and GitHub, and a three.js page draws each epic as a plot, each ticket as a crop and each agent as a gardener. One glance shows who is working, who is waiting on me and which pull requests need a hand. From the page I can answer a permission prompt, message an idle agent, review its screenshots before it opens a pull request, or plant a new agent in a repo for a ticket. Everything runs locally.',
+    stack: ['javascript', 'nodejs', 'threejs', 'vite'],
+    image: {
+      src: '/images/projects/bradle-bots.jpg',
+      alt: 'The agent garden by day: three plots of crops, gardeners at work and a side panel listing every agent, with made-up tickets',
       width: 1200,
       height: 750,
     },
@@ -200,6 +218,7 @@ const STAGE: readonly string[] = [
   'bradwell-music',
   'staniland-audio',
   'llm-seo-toolbox',
+  'bradle-bots',
   'number-recognition',
   'hand-tracker',
 ]
